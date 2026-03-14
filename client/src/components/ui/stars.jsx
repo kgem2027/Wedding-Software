@@ -58,7 +58,7 @@ function StarsBackground({ children, speed = 50, starColor = '#fff' }) {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        background: '#000',
+        background: 'linear-gradient(to bottom, #000000 0%, #020111 40%, #191621 100%)',
       }}
     >
       <StarLayer count={3000} size={1} duration={speed} starColor={starColor} />

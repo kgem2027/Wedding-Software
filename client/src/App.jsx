@@ -1,8 +1,45 @@
+import { BrowserRouter as Router, Routes,
+  Route,
+  Navigate
+  } from "react-router-dom"
+import Navbar from "./components/Navbar"
+import Home from "./pages/Home"
+import Login from "./pages/login"
+import Register from "./pages/Register"
+import { useEffect, useState } from "react"
+import axios from "axios"
 
-export default function App() {
+function App() {
+  const [user, setUser] = useState(null)
+  const [error,setError] = useState('')
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        try {
+          const res = await axios.get('/api/auth/user', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          setUser(res.data)
+        } catch (err) {
+          setError('Failed to fetch user')
+          localStorage.removeItem('token')
+        }
+      }
+    }
+
+    fetchUser()
+  }, [])
   return (
-    <div>
-      Hello
-    </div>
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+
+    </Router>
   )
 }
+export default App
