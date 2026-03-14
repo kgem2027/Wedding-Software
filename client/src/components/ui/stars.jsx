@@ -24,7 +24,6 @@ function StarLayer({ count = 1000, size = 1, duration = 50, starColor = '#fff' }
     borderRadius: '50%',
     width: `${size}px`,
     height: `${size}px`,
-    // Center the origin dot so box-shadows spread equally left and right
     left: '50%',
     boxShadow: boxShadow,
   };
