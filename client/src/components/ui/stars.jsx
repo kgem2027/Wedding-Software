@@ -24,7 +24,6 @@ function StarLayer({ count = 1000, size = 1, duration = 50, starColor = '#fff' }
     borderRadius: '50%',
     width: `${size}px`,
     height: `${size}px`,
-    // Center the origin dot so box-shadows spread equally left and right
     left: '50%',
     boxShadow: boxShadow,
   };
@@ -58,7 +57,7 @@ function StarsBackground({ children, speed = 50, starColor = '#fff' }) {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        background: '#000',
+        background: 'linear-gradient(to bottom, #000000 0%, #020111 40%, #191621 100%)',
       }}
     >
       <StarLayer count={3000} size={1} duration={speed} starColor={starColor} />
