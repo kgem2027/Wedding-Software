@@ -1,97 +1,91 @@
+import React from 'react'
 import GradientText from "../components/ui/gradient-text.jsx"
 import AuthenticationBackground from "./pageComponents/AuthenticationBackground.jsx"
-import React from 'react'
-import {
-  Tabs,
-  TabsContent,
-  TabsContents,
-  TabsList,
-  TabsTrigger,
-} from '@/components/animate-ui/components/radix/tabs';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from 'react'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 
-  const Login = () => {
-    return (
-      <div>
-        <AuthenticationBackground>
-          <GradientText
-            colors={["#ff6b9d", "#ffffff", "#ff8585"]}
-            animationSpeed={4}
-          >
-            Login
-          </GradientText>
+const Login = ({ setUser }) => {
+  const navigate = useNavigate()
 
-          <div className="flex w-full max-w-sm flex-col gap-6">
-            <Tabs defaultValue="account">
-              <div className="relative">
-                <TabsList>
-                  <TabsTrigger value="account">Account</TabsTrigger>
-                  <TabsTrigger value="password">Password</TabsTrigger>
-                </TabsList>
-              </div>
-              <Card className="shadow-none py-0">
-                <TabsContents className="py-6">
-                  <TabsContent value="account" className="flex flex-col gap-6">
-                    <CardHeader>
-                      <CardTitle>Account</CardTitle>
-                      <CardDescription>
-                        Make changes to your account here. Click save when you&apos;re done.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-6">
-                      <div className="grid gap-3">
-                        <Label htmlFor="login-name">Name</Label>
-                        <Input id="login-name" placeholder="Your name" />
-                      </div>
-                      <div className="grid gap-3">
-                        <Label htmlFor="login-email">Email</Label>
-                        <Input id="login-email" type="email" placeholder="you@example.com" />
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button>Save changes</Button>
-                    </CardFooter>
-                  </TabsContent>
+  const [errors, setErrors] = useState('')
 
-                  <TabsContent value="password" className="flex flex-col gap-6">
-                    <CardHeader>
-                      <CardTitle>Password</CardTitle>
-                      <CardDescription>
-                        Change your password here. After saving, you&apos;ll be logged out.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-6">
-                      <div className="grid gap-3">
-                        <Label htmlFor="login-current">Current password</Label>
-                        <Input id="login-current" type="password" />
-                      </div>
-                      <div className="grid gap-3">
-                        <Label htmlFor="login-new">New password</Label>
-                        <Input id="login-new" type="password" />
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button>Save password</Button>
-                    </CardFooter>
-                  </TabsContent>
-                </TabsContents>
-              </Card>
-            </Tabs>
-          </div>
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
 
-        </AuthenticationBackground>
-      </div>
-    )
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value
+    })
   }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      const res = await axios.post('/api/users/login', formData)
+      localStorage.setItem('token', res.data.token)
+      console.log(res.data)
+      setUser(res.data.user)
+      navigate('/')
+      
+    } catch (error) {
+      setErrors(error.response?.data?.message || 'An error occurred during login.')
+    }
+  }
+
+  return (
+    <div>
+    <AuthenticationBackground>
+      <GradientText
+        colors={["#ff6b9d", "#ffffff", "#ff8585"]}
+        animationSpeed={4}
+        >
+            Login
+        </GradientText>
+        {errors && <p style={{ color: 'red', marginTop: '20px' }}>{errors}</p>}
+    
+    <form onSubmit={handleSubmit} className="mt-6 w-72">
+      <div>
+        <label className="block text-white text-sm font-medium mb-2" style={{ color: 'white' }}>
+          Email:
+        </label>
+        <input
+          type="email"
+          id="email"
+          className="w-full p-3 border border-gray-500 bg-gray-900 text-white rounded-md focus:ring-2 focus:ring-blue-500"
+          placeholder = "Enter your email"
+          name = "email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+      </div>
+      <div className="mt-4">
+        <label className="block text-white text-sm font-medium mb-2" style={{ color: 'white' }}>
+          Password:
+        </label>
+        <input
+          type="password"
+          id="password"
+          className="w-full p-3 border border-gray-500 bg-gray-900 text-white rounded-md focus:ring-2 focus:ring-blue-500"
+          placeholder = "Enter your password"
+          name = "password"
+          value={formData.password}
+          onChange={handleChange}
+          required  
+        />
+      </div>
+      <button type="submit" className="mt-6 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        Login
+      </button>
+    </form>
+    </AuthenticationBackground>
+    </div>
+  )
+}
 
 export default Login
