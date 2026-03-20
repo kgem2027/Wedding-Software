@@ -1,27 +1,55 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 
-
 const Navbar = () => {
   return (
-    <nav className="navbar">
-      <div className="navbar-brand">
-        <NavLink to="/">TwoRings</NavLink>
+    <nav className="w-full bg-[#92a5e8] px-10 py-3 flex flex-row items-center gap-6 fixed top-0 left-0 z-50">
+      <div className="mr-6">
+        <NavLink to="/" className="text-white font-bold text-xl tracking-wide">
+          TwoRings
+        </NavLink>
       </div>
-      <ul className="navbar-nav">
+      <ul className="flex flex-row items-center gap-4 list-none m-0 p-0">
         <li>
-          <NavLink to="/" exact activeClassName="active">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                isActive
+                  ? 'bg-pink-400 text-white shadow-md'
+                  : 'bg-pink-300/80 text-white hover:bg-pink-400 hover:shadow-md'
+              }`
+            }
+          >
             Home
           </NavLink>
         </li>
         <li>
-          <NavLink to="/options" activeClassName="active">
+          <NavLink
+            to="/options"
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                isActive
+                  ? 'bg-pink-400 text-white shadow-md'
+                  : 'bg-pink-300/80 text-white hover:bg-pink-400 hover:shadow-md'
+              }`
+            }
+          >
             Continue Session
           </NavLink>
         </li>
         <li>
-          <NavLink to="/contact" activeClassName="active">
+          <NavLink
+            to="/contact"
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                isActive
+                  ? 'bg-pink-400 text-white shadow-md'
+                  : 'bg-pink-300/80 text-white hover:bg-pink-400 hover:shadow-md'
+              }`
+            }
+          >
             Contact
           </NavLink>
         </li>

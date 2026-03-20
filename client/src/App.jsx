@@ -1,7 +1,4 @@
-import { BrowserRouter as Router, Routes,
-  Route,
-  Navigate
-  } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import Home from "./pages/Home"
 import Login from "./pages/login"
@@ -9,9 +6,13 @@ import Register from "./pages/Register"
 import { useEffect, useState } from "react"
 import axios from "axios"
 
-function App() {
+function AppContent() {
   const [user, setUser] = useState(null)
-  const [error,setError] = useState('')
+  const [error, setError] = useState('')
+  const location = useLocation()
+
+  const hideNavbar = ['/login', '/register'].includes(location.pathname)
+
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem('token')
@@ -30,16 +31,25 @@ function App() {
 
     fetchUser()
   }, [])
+
   return (
-    <Router>
-      <Navbar />
+    <>
+      {!hideNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home user={user} error={error} />} />
         <Route path="/login" element={<Login setUser={setUser} />} />
         <Route path="/register" element={<Register setUser={setUser} />} />
       </Routes>
+    </>
+  )
+}
 
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   )
 }
+
 export default App
