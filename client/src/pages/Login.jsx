@@ -43,6 +43,7 @@ const Login = ({ setUser }) => {
       <GradientText
         colors={["#ff6b9d", "#ffffff", "#ff8585"]}
         animationSpeed={4}
+        className = "auth-text"
         >
             Login
         </GradientText>
