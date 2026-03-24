@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const API_BASE = "/api/registry"; // adjust this to match your Express route prefix
+const API_BASE = "/api/registry";
 
 export default function RegistryApp() {
   const [items, setItems] = useState([]);
@@ -9,7 +9,6 @@ export default function RegistryApp() {
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch all registry items on mount
   useEffect(() => {
     fetchItems();
   }, []);
@@ -29,7 +28,7 @@ export default function RegistryApp() {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault(); // no page reload
+    e.preventDefault();
     setError(null);
     setSuccess(null);
     setLoading(true);
@@ -53,8 +52,8 @@ export default function RegistryApp() {
       }
 
       const newItem = await res.json();
-      setItems((prev) => [...prev, newItem]); // add to list without reload
-      setForm({ itemName: "", quantity: "", store: "", description: "", link: "" }); // clear form
+      setItems((prev) => [...prev, newItem]);
+      setForm({ itemName: "", quantity: "", store: "", description: "", link: "" });
       setSuccess("Item added to registry!");
     } catch (err) {
       setError(err.message);
@@ -74,131 +73,146 @@ export default function RegistryApp() {
   }
 
   return (
-    <div style={styles.page}>
-      <h1 style={styles.title}>Gift Registry</h1>
+    <div className="min-h-screen bg-stone-50 font-serif text-stone-900">
+      <div className="max-w-3xl mx-auto px-6 py-10">
 
-      {/* ADD ITEM FORM */}
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <h2 style={styles.sectionTitle}>Add New Item</h2>
-
-        <div style={styles.row}>
-          <div style={styles.field}>
-            <label style={styles.label}>Item Name *</label>
-            <input
-              style={styles.input}
-              name="itemName"
-              value={form.itemName}
-              onChange={handleChange}
-              placeholder="e.g. KitchenAid Mixer"
-              required
-            />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Quantity *</label>
-            <input
-              style={styles.input}
-              name="quantity"
-              type="number"
-              min="1"
-              value={form.quantity}
-              onChange={handleChange}
-              placeholder="1"
-              required
-            />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Store *</label>
-            <input
-              style={styles.input}
-              name="store"
-              value={form.store}
-              onChange={handleChange}
-              placeholder="e.g. Target"
-              required
-            />
-          </div>
+        {/* Header */}
+        <div className="mb-10 border-b-2 border-stone-900 pb-4 pt-10">
+          <h1 className="text-4xl font-bold tracking-tight">Gift Registry</h1>
         </div>
 
-        <div style={styles.field}>
-          <label style={styles.label}>Description</label>
-          <input
-            style={styles.input}
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Optional description"
-          />
-        </div>
+        {/* Add Item Form */}
+        <div className="bg-indigo-200 border border-indigo-300 rounded-xl p-6 mb-10 shadow-sm">
+          <h2 className="text-lg font-bold text-stone-800 mb-5">Add New Item</h2>
 
-        <div style={styles.field}>
-          <label style={styles.label}>Link</label>
-          <input
-            style={styles.input}
-            name="link"
-            value={form.link}
-            onChange={handleChange}
-            placeholder="https://..."
-          />
-        </div>
-
-        {error && <p style={styles.error}>{error}</p>}
-        {success && <p style={styles.successMsg}>{success}</p>}
-
-        <button style={styles.button} type="submit" disabled={loading}>
-          {loading ? "Adding..." : "Add to Registry"}
-        </button>
-      </form>
-
-      {/* REGISTRY LIST */}
-      <div style={styles.list}>
-        <h2 style={styles.sectionTitle}>Registry Items ({items.length})</h2>
-        {items.length === 0 ? (
-          <p style={styles.empty}>No items yet. Add one above!</p>
-        ) : (
-          items.map((item) => (
-            <div key={item._id} style={styles.card}>
-              <div style={styles.cardInfo}>
-                <strong style={styles.itemName}>{item.itemName}</strong>
-                <span style={styles.meta}>Qty: {item.quantity} &nbsp;|&nbsp; Store: {item.store}</span>
-                {item.description && <p style={styles.desc}>{item.description}</p>}
-                {item.link && (
-                  <a href={item.link} target="_blank" rel="noreferrer" style={styles.link}>
-                    View Item →
-                  </a>
-                )}
+          <form onSubmit={handleSubmit}>
+            <div className="flex flex-wrap gap-4 mb-4">
+              <div className="flex flex-col flex-1 min-w-[160px]">
+                <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide">Item Name *</label>
+                <input
+                  className="px-3 py-2 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                  name="itemName"
+                  value={form.itemName}
+                  onChange={handleChange}
+                  placeholder="e.g. KitchenAid Mixer"
+                  required
+                />
               </div>
-              <button style={styles.deleteBtn} onClick={() => handleDelete(item._id)}>
-                Remove
-              </button>
+
+              <div className="flex flex-col w-28">
+                <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide">Qty *</label>
+                <input
+                  className="px-3 py-2 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  value={form.quantity}
+                  onChange={handleChange}
+                  placeholder="1"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col flex-1 min-w-[160px]">
+                <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide">Store *</label>
+                <input
+                  className="px-3 py-2 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                  name="store"
+                  value={form.store}
+                  onChange={handleChange}
+                  placeholder="e.g. Target"
+                  required
+                />
+              </div>
             </div>
-          ))
-        )}
+
+            <div className="flex flex-col mb-4">
+              <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide">Description</label>
+              <input
+                className="px-3 py-2 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Optional description"
+              />
+            </div>
+
+            <div className="flex flex-col mb-5">
+              <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide">Link</label>
+              <input
+                className="px-3 py-2 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                name="link"
+                value={form.link}
+                onChange={handleChange}
+                placeholder="https://..."
+              />
+            </div>
+
+            {error && (
+              <p className="text-red-600 text-sm mb-3">{error}</p>
+            )}
+            {success && (
+              <p className="text-emerald-600 text-sm mb-3">{success}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-2.5 bg-stone-900 text-white text-sm font-sans rounded-md hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              {loading ? "Adding..." : "Add to Registry"}
+            </button>
+          </form>
+        </div>
+
+        {/* Registry List */}
+        <div>
+          <h2 className="text-lg font-bold text-stone-700 mb-4">
+            Registry Items
+            <span className="ml-2 text-sm font-normal text-stone-400">({items.length})</span>
+          </h2>
+
+          {items.length === 0 ? (
+            <p className="text-stone-400 italic text-sm">No items yet. Add one above!</p>
+          ) : (
+            <ul className="space-y-3">
+              {items.map((item) => (
+                <li
+                  key={item._id}
+                  className="flex justify-between items-start bg-white border border-stone-200 rounded-lg px-5 py-4 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className="text-base font-semibold text-stone-900">{item.itemName}</span>
+                    <span className="text-xs text-stone-400 font-sans">
+                      Qty: {item.quantity}&nbsp;&nbsp;·&nbsp;&nbsp;Store: {item.store}
+                    </span>
+                    {item.description && (
+                      <p className="text-sm text-stone-500 mt-0.5">{item.description}</p>
+                    )}
+                    {item.link && (
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline mt-0.5 font-sans transition-colors"
+                      >
+                        View Item →
+                      </a>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => handleDelete(item._id)}
+                    className="ml-4 mt-0.5 px-3 py-1.5 text-xs font-sans text-red-500 border border-stone-200 rounded-md hover:border-red-300 hover:bg-red-50 transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: { display: "flex", flexDirection: "column", height: "100vh", maxWidth: 780, margin: "0 auto", padding: "2rem 1.5rem 0", fontFamily: "Georgia, serif", color: "#1a1a1a", boxSizing: "border-box" },
-  title: { fontSize: "2.2rem", fontWeight: "bold", marginBottom: "2rem", borderBottom: "2px solid #1a1a1a", paddingBottom: "0.5rem", flexShrink: 0 },
-  sectionTitle: { fontSize: "1.2rem", fontWeight: "bold", marginBottom: "1rem", color: "#333" },
-  form: { background: "#92a5e8", border: "1px solid #ddd", borderRadius: 8, padding: "1.5rem", marginBottom: "2rem", flexShrink: 0 },
-  row: { display: "flex", gap: "1rem", flexWrap: "wrap" },
-  field: { display: "flex", flexDirection: "column", flex: 1, minWidth: 160, marginBottom: "1rem" },
-  label: { fontSize: "0.85rem", fontWeight: "bold", marginBottom: 4, color: "#444" },
-  input: { padding: "0.5rem 0.75rem", border: "1px solid #ccc", borderRadius: 5, fontSize: "1rem", fontFamily: "inherit", outline: "none" },
-  button: { marginTop: "0.5rem", padding: "0.65rem 1.5rem", background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 5, fontSize: "1rem", cursor: "pointer", fontFamily: "inherit" },
-  error: { color: "#c0392b", marginBottom: "0.5rem" },
-  successMsg: { color: "#27ae60", marginBottom: "0.5rem" },
-  list: { flex: 1, overflowY: "auto", paddingBottom: "2rem" },
-  card: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "1rem 1.25rem", border: "1px solid #e0e0e0", borderRadius: 7, marginBottom: "0.75rem", background: "#fff" },
-  cardInfo: { display: "flex", flexDirection: "column", gap: 4 },
-  itemName: { fontSize: "1.1rem" },
-  meta: { fontSize: "0.85rem", color: "#666" },
-  desc: { fontSize: "0.9rem", color: "#444", margin: 0 },
-  link: { fontSize: "0.85rem", color: "#2563eb" },
-  deleteBtn: { background: "none", border: "1px solid #ccc", borderRadius: 5, padding: "0.35rem 0.75rem", cursor: "pointer", color: "#c0392b", fontSize: "0.85rem", whiteSpace: "nowrap" },
-  empty: { color: "#999", fontStyle: "italic" },
-};
