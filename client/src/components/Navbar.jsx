@@ -27,7 +27,7 @@ const Navbar = () => {
         </li>
         <li>
           <NavLink
-            to="/options"
+            to="/registry"
             className={({ isActive }) =>
               `px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 isActive
@@ -36,7 +36,7 @@ const Navbar = () => {
               }`
             }
           >
-            Continue Session
+            Registry
           </NavLink>
         </li>
         <li>
