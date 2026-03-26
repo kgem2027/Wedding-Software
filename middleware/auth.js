@@ -30,3 +30,19 @@ export const protect = async (req, res, next) => {
         res.status(401).json({ message: 'Not authorized, no token' });
     }
 };
+export const requireRole = (...allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            logger.debug('requireRole: no user on request');
+            return res.status(401).json({ message: 'Not authorized, no token' });
+        }
+
+        if (!allowedRoles.includes(req.user.role)) {
+            logger.debug(`requireRole: user role "${req.user.role}" not in [${allowedRoles}]`);
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        logger.debug(`requireRole: "${req.user.role}" granted access`);
+        next();
+    };
+};
