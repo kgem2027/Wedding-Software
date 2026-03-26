@@ -34,14 +34,14 @@ function getAll(req, res) {
 }
 function create(req, res) {
     const { weddingName, weddingDate, plannerId, accessList } = req.body;
-
+     logger.debug(`Creating wedding with data: ${JSON.stringify(req.body)}`);
     weddingService.createWedding(weddingName, weddingDate, plannerId, accessList)
         .then(async (wedding) => {
             const populatedWedding = await wedding.populate({
                 path: "plannerId",
                 select: "name -_id"
             })
-
+            logger.debug(`Wedding created: ${JSON.stringify(wedding)}`);
             res.status(201).json(populatedWedding);
         })
         .catch(error => {
