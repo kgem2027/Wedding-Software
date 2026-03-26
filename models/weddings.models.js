@@ -13,3 +13,4 @@ const weddingsSchema = new mongoose.Schema({
     createdAt: {type: Date, default: Date.now}
 });
 const Weddings = mongoose.model('Wedding', weddingsSchema);
+export default Weddings;
