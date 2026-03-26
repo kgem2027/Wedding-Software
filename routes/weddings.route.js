@@ -14,7 +14,7 @@ const logger = pino({
     }
 });
 router.get('/',protect, requireRole('admin','planner','client','vendor'), getAll);
-router.post('/weddings', protect, requireRole('admin','planner'), create);
+router.post('/create', protect, requireRole('admin','planner'), create);
 router.get('/weddings/:id',protect, requireRole('admin','planner','client','vendor'), checkWeddingAccess, getById);
 router.put('/weddings/:id', protect, requireRole('admin','planner'), update);
 router.delete('/weddings/:id', protect, requireRole('admin'), remove);

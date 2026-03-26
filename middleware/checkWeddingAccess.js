@@ -4,7 +4,7 @@ import Weddings from '../models/weddings.models.js';
 const logger = pino({ level: 'debug' });
 
 const checkWeddingAccess = async (req, res, next) => {
-    const { role, _id: userId } = req.user;   // req.user comes from your protect()
+    const { role, _id: userId } = req.user;   // req.user comes from protect()
     const { id: weddingId } = req.params;
 
     // Admins see everything

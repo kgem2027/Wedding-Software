@@ -8,9 +8,9 @@ const router = express.Router();
 // REGISTER
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, role, password } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !role || !password) {
       return res.status(400).json({ message: "Please provide all required fields" });
     }
 
@@ -19,7 +19,7 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const user = await Users.create({ name, email, password });
+    const user = await Users.create({ name, email, password, role });
 
 
     const token = generateToken(user._id);
@@ -31,6 +31,7 @@ router.post("/register", async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role
       },
     });
   } catch (error) {
@@ -67,6 +68,7 @@ router.post("/login", async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role
       },
     });
   } catch (error) {
