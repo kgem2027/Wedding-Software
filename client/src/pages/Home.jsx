@@ -10,7 +10,7 @@ const Home = ({user, error}) => {
   return (
     <div style={{ height: "100vh", overflowY: "scroll" }}>
 
-      {/* Iridescence background — fixed behind everything */}
+      {/* Iridescence background*/}
       <div style={{
         position: "fixed",
         top: 0,
@@ -28,7 +28,7 @@ const Home = ({user, error}) => {
         />
       </div>
 
-      {/* Content layer — scrolls normally on top of background */}
+      {/* Content layer */}
       <div style={{ position: "relative", zIndex: 10 }}>
          <h1 className="text-center text-5xl pt-24">Welcome {user ? user.name : 'Guest'} to TwoRings</h1>
 

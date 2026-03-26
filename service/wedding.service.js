@@ -19,8 +19,8 @@ async function getAllWeddings(userId, role) {
     }
     return await Weddings.find({ 'accessList.userId': userId });
 }
-async function createWedding(weddingName, weddingDate, accessList) {
-    const wedding = new Weddings({ weddingName, weddingDate, accessList });
+async function createWedding(weddingName, weddingDate, plannerId, accessList) {
+    const wedding = new Weddings({ weddingName, weddingDate, plannerId , accessList });
     return await wedding.save();
 }
 async function getWeddingById(id) {

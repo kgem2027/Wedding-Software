@@ -33,17 +33,20 @@ function getAll(req, res) {
         });
 }
 function create(req, res) {
-    const { weddingName, weddingDate, accessList } = req.body;
-    logger.debug(`Creating wedding with data: ${JSON.stringify(req.body)}`);
-    weddingService.createWedding(weddingName, weddingDate, accessList)
-        .then(wedding => {
-            logger.debug(`Wedding created: ${JSON.stringify(wedding)}`);
-            res.status(201).json(wedding);
+    const { weddingName, weddingDate, plannerId, accessList } = req.body;
+
+    weddingService.createWedding(weddingName, weddingDate, plannerId, accessList)
+        .then(async (wedding) => {
+            const populatedWedding = await wedding.populate({
+                path: "plannerId",
+                select: "name -_id"
+            })
+
+            res.status(201).json(populatedWedding);
         })
         .catch(error => {
-            logger.error('Error creating wedding:', error);
             res.status(500).json({ error: 'Internal server error' });
-        });
+        })
 }
 function getById(req, res) {
     const id = req.params.id;
