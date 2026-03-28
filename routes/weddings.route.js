@@ -15,9 +15,9 @@ const logger = pino({
 });
 router.get('/',protect, requireRole('admin','planner','client','vendor'), getAll);
 router.post('/create', protect, requireRole('admin','planner'), create);
-router.get('/weddings/:id',protect, requireRole('admin','planner','client','vendor'), checkWeddingAccess, getById);
-router.put('/weddings/:id', protect, requireRole('admin','planner'), update);
-router.delete('/weddings/:id', protect, requireRole('admin'), remove);
+router.get('/:id',protect, requireRole('admin','planner','client','vendor'), checkWeddingAccess, getById);
+router.put('/:id', protect, requireRole('admin','planner'), update);
+router.delete('/:id', protect, requireRole('admin'), remove);
 
 function getAll(req, res) {
     const{_id:userId, role} = req.user;
@@ -33,9 +33,9 @@ function getAll(req, res) {
         });
 }
 function create(req, res) {
-    const { weddingName, weddingDate, plannerId, accessList } = req.body;
+    const { weddingName, weddingDate, plannerId, accessList, privacy } = req.body;
      logger.debug(`Creating wedding with data: ${JSON.stringify(req.body)}`);
-    weddingService.createWedding(weddingName, weddingDate, plannerId, accessList)
+    weddingService.createWedding(weddingName, weddingDate, plannerId, accessList, privacy)
         .then(async (wedding) => {
             const populatedWedding = await wedding.populate({
                 path: "plannerId",
@@ -68,9 +68,9 @@ function getById(req, res) {
 }
 function update(req, res) {
     const { id } = req.params;
-    const { weddingName, weddingDate, accessList } = req.body;
+    const { weddingName, weddingDate, accessList, privacy } = req.body;
     logger.debug(`Updating wedding with id: ${id}`);
-    weddingService.updateWedding(id, { weddingName, weddingDate, accessList })
+    weddingService.updateWedding(id, { weddingName, weddingDate, accessList, privacy })
         .then(wedding => {
             if (!wedding) {
                 logger.warn(`Wedding with id ${id} not found`);

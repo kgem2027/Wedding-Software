@@ -10,6 +10,7 @@ const weddingsSchema = new mongoose.Schema({
     weddingDate:{type:String, required:[true, "Please provide a date for the wedding"]},
     plannerId:{type: mongoose.Schema.Types.ObjectId, ref:'User', required:false},
     accessList:[accessEntrySchema],
+    privacy: {type: String, enum: ["private", "public"], default: 'private'},
     createdAt: {type: Date, default: Date.now}
 });
 const Weddings = mongoose.model('Wedding', weddingsSchema);
