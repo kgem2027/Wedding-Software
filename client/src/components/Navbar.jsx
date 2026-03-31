@@ -1,7 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from './authProvider.jsx';
 
 const Navbar = () => {
+  const { user, logout } = useAuth();
+
   return (
     <nav className="w-full bg-[#92a5e8] px-10 py-3 flex flex-row items-center gap-6 fixed top-0 left-0 z-50">
       <div className="mr-6">
@@ -53,6 +56,22 @@ const Navbar = () => {
             Contact
           </NavLink>
         </li>
+        {user?.role === 'admin' && (
+          <li>
+            <NavLink
+              to="/edit/roster"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  isActive
+                    ? 'bg-pink-400 text-white shadow-md'
+                    : 'bg-pink-300/80 text-white hover:bg-pink-400 hover:shadow-md'
+                }`
+              }
+            >
+              Edit Roster
+            </NavLink>
+          </li>
+        )}
       </ul>
     </nav>
   );

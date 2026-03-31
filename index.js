@@ -18,7 +18,7 @@ app.use(express.urlencoded({extended: false}));
 
 //routes
 app.use('/api/flowers', flowerRoutes);
-app.use('/api/users', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/registry', registryRoutes);
 app.use('/api/weddings', weddingRoutes);
 

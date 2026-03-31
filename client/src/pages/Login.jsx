@@ -3,7 +3,7 @@ import GradientText from "../components/ui/gradient-text.jsx"
 import AuthenticationBackground from "./pageComponents/AuthenticationBackground.jsx"
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../authProvider.jsx'
+import { useAuth } from '../components/authProvider.jsx'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -25,7 +25,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('/api/users/login', formData)
+      const res = await axios.post('/api/auth/login', formData)
       login(res.data.user, res.data.token)
       navigate('/')
     } catch (error) {
