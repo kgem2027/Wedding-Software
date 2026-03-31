@@ -42,11 +42,12 @@ const Navbar = () => {
             Registry
           </NavLink>
         </li>
-        <li>
-          <NavLink
-            to="/contact"
-            className={({ isActive }) =>
-              `px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+        {user?.role == 'client' && (
+          <li>
+            <NavLink
+              to="/contact"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 isActive
                   ? 'bg-pink-400 text-white shadow-md'
                   : 'bg-pink-300/80 text-white hover:bg-pink-400 hover:shadow-md'
@@ -56,6 +57,7 @@ const Navbar = () => {
             Contact
           </NavLink>
         </li>
+        )}
         {user?.role === 'admin' && (
           <li>
             <NavLink
@@ -72,6 +74,22 @@ const Navbar = () => {
             </NavLink>
           </li>
         )}
+        {user?.role === 'admin' || user?.role === 'planner' ? (
+          <li>
+            <NavLink
+              to="/weddings"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  isActive
+                    ? 'bg-pink-400 text-white shadow-md'
+                    : 'bg-pink-300/80 text-white hover:bg-pink-400 hover:shadow-md'
+                }`
+              }
+            >
+              Weddings
+            </NavLink>
+          </li>
+        ) : null}
       </ul>
     </nav>
   );

@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import flowerRoutes from './routes/flower.route.js';
 import registryRoutes from './routes/registry.route.js';
 import weddingRoutes from './routes/weddings.route.js';
+import usersRoutes from './routes/users.route.js';
 const app = express();
 
 
@@ -21,6 +22,7 @@ app.use('/api/flowers', flowerRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/registry', registryRoutes);
 app.use('/api/weddings', weddingRoutes);
+app.use('/api/users', usersRoutes);
 
 
 

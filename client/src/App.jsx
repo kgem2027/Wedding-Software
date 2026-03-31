@@ -5,6 +5,7 @@ import Login from "./pages/login"
 import Register from "./pages/Register"
 import Registry from "./pages/Registry"
 import EditRoster from "./pages/EditRoster"
+import Weddings from "./pages/Weddings"
 import ProtectedRoute from "./components/ProtectedRoutes.jsx"
 import { AuthProvider, useAuth } from "./components/authProvider.jsx" 
 
@@ -22,9 +23,16 @@ function AppContent() {
         <Route path="/registry" element={<Registry />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
         <Route path = "/edit/roster" element = {
           <ProtectedRoute allowedRoles={['admin']}>
             <EditRoster />
+          </ProtectedRoute>
+        }
+          />
+        <Route path = "/weddings" element = {
+          <ProtectedRoute allowedRoles={['admin', 'planner']}>
+            <Weddings />
           </ProtectedRoute>
         }
         />
