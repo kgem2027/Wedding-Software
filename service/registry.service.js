@@ -18,9 +18,9 @@ async function getRegistryItemById(id) {
     logger.info(`Fetching registry item with ID: ${id}`);
     return await Registry.findById(id);
 }
-async function addRegistryItem(itemName, quantity, store, description, link) {
+async function addRegistryItem(itemName, quantity, store, description, link, weddingId) {
     logger.info(`Adding new registry item: ${itemName}`);
-    const registryItem = new Registry({ itemName, quantity, store, description, link });
+    const registryItem = new Registry({ itemName, quantity, store, description, link, weddingId });
     return await registryItem.save();
 }
 async function updateRegistryItem(id, data) {
@@ -39,7 +39,12 @@ async function getRegistryItemsByStore(searchStore) {
     logger.info(`Searching registry items with store: ${searchStore}`);
     return await Registry.find({ store: { $regex: searchStore, $options: 'i' } });
 }
+async function getRegistryItemsByWeddingId(weddingId) {
+    logger.info(`Fetching registry items for wedding ID: ${weddingId}`);
+    return await Registry.find({ weddingId });
+}
 export default {
+    getRegistryItemsByWeddingId,
     listRegistry,
     getRegistryItemById,
     addRegistryItem,

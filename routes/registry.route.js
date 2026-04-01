@@ -16,10 +16,12 @@ const logger = pino({
 router.get('/', getAll);
 router.get('/search/registryItem/:name', getByName);
 router.get('/search/registryItemsByStore/:store', getByStore);
+router.get('/registryItemsByWeddingId/:weddingId', getByWeddingId);
 router.get('/:id', getById);
 router.post('/', add);
 router.put('/:id', update);
 router.delete('/:id', remove);
+
 function getAll(req, res) {
     logger.debug('Fetching all registry items');
     registryService.listRegistry()
@@ -42,10 +44,17 @@ function getById(req, res) {
         })
         .catch(err => res.status(500).json({ error: err.message }));
 }
+function getByWeddingId(req, res) {
+    const weddingId = req.params.weddingId;
+    logger.debug(`Fetching registry items for wedding ID: ${weddingId}`);
+    registryService.getRegistryItemsByWeddingId(weddingId)
+        .then(items => res.json(items))
+        .catch(err => res.status(500).json({ error: err.message }));
+}
 function add(req, res) {
-    const { itemName, quantity, store, description, link } = req.body;
+    const { itemName, quantity, store, description, link, weddingId } = req.body;
     logger.debug(`add: ${JSON.stringify(req.body)}`);
-    registryService.addRegistryItem(itemName, quantity, store, description, link)
+    registryService.addRegistryItem(itemName, quantity, store, description, link, weddingId)
         .then(item => res.json(item))
         .catch(err => res.status(500).json({ error: err.message }));
 }
