@@ -28,6 +28,7 @@ const Navbar = () => {
             Home
           </NavLink>
         </li>
+        {user?.role === 'client' && (
         <li>
           <NavLink
             to="/registry"
@@ -42,6 +43,7 @@ const Navbar = () => {
             Registry
           </NavLink>
         </li>
+        )}
         {user?.role == 'client' && (
           <li>
             <NavLink
@@ -74,7 +76,7 @@ const Navbar = () => {
             </NavLink>
           </li>
         )}
-        {user?.role === 'admin' || user?.role === 'planner' ? (
+      
           <li>
             <NavLink
               to="/weddings"
@@ -89,7 +91,6 @@ const Navbar = () => {
               Weddings
             </NavLink>
           </li>
-        ) : null}
       </ul>
     </nav>
   );

@@ -1,112 +1,133 @@
 import { useState, useEffect } from "react";
 
-const API_BASE = "/api/registry";
+const WEDDINGS_API = "/api/weddings";
+const REGISTRY_API = "/api/registry";
+
+function getAuthHeaders() {
+  const token = localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
 
 export default function RegistryApp() {
+  // Auth / user state
+  const [user, setUser] = useState(null); // { _id, role, name }
+
+  // Wedding selection
+  const [weddings, setWeddings] = useState([]);
+  const [selectedWedding, setSelectedWedding] = useState(null);
+  const [weddingsLoading, setWeddingsLoading] = useState(true);
+
+  // Registry items
   const [items, setItems] = useState([]);
+  const [registryLoading, setRegistryLoading] = useState(false);
+
+  // Add form
   const [form, setForm] = useState({ itemName: "", quantity: "", store: "", description: "", link: "" });
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+
+  // Edit
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [editLoading, setEditLoading] = useState(false);
 
+  // Feedback
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  // ── On mount: read user from localStorage (set by your login flow) ──────────
   useEffect(() => {
-    fetchItems();
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      try { setUser(JSON.parse(stored)); } catch (_) {}
+    }
   }, []);
 
-  async function fetchItems() {
-    try {
-      const res = await fetch(API_BASE);
-      const data = await res.json();
-      setItems(data);
-    } catch (err) {
-      setError("Failed to load registry items.");
-    }
-  }
+  // ── Fetch weddings the user has access to ───────────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    setWeddingsLoading(true);
+    fetch(WEDDINGS_API, { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then((data) => {
+        setWeddings(data);
+        // Auto-select if only one
+        if (data.length === 1) setSelectedWedding(data[0]);
+      })
+      .catch(() => setError("Failed to load your weddings."))
+      .finally(() => setWeddingsLoading(false));
+  }, [user]);
 
+  // ── Fetch registry items when a wedding is selected ─────────────────────────
+  useEffect(() => {
+    if (!selectedWedding) return;
+    setRegistryLoading(true);
+    setItems([]);
+    fetch(`${REGISTRY_API}?weddingId=${selectedWedding._id}`, { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then(setItems)
+      .catch(() => setError("Failed to load registry items."))
+      .finally(() => setRegistryLoading(false));
+  }, [selectedWedding]);
+
+  const isClient = user?.role === "client" || user?.role === "vendor";
+  const canEdit = user?.role === "admin" || user?.role === "planner";
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
-
+    setError(null); setSuccess(null); setFormLoading(true);
     try {
-      const res = await fetch(API_BASE, {
+      const res = await fetch(REGISTRY_API, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
-          itemName: form.itemName,
+          ...form,
           quantity: Number(form.quantity),
-          store: form.store,
-          description: form.description,
-          link: form.link,
+          weddingId: selectedWedding._id,
         }),
       });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Something went wrong");
-      }
-
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Something went wrong"); }
       const newItem = await res.json();
       setItems((prev) => [...prev, newItem]);
       setForm({ itemName: "", quantity: "", store: "", description: "", link: "" });
-      setSuccess("Item added to registry!");
+      setSuccess("Item added!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   }
 
   async function handleDelete(id) {
     try {
-      const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+      const res = await fetch(`${REGISTRY_API}/${id}`, { method: "DELETE", headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to delete item");
-      setItems((prev) => prev.filter((item) => item._id !== id));
+      setItems((prev) => prev.filter((i) => i._id !== id));
       if (editingId === id) setEditingId(null);
     } catch (err) {
       setError(err.message);
     }
   }
 
-  function startEdit(item) {
-    setEditingId(item._id);
-    setEditForm({
-      itemName: item.itemName,
-      quantity: item.quantity,
-      store: item.store,
-      description: item.description || "",
-      link: item.link || "",
-    });
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditForm({});
-  }
-
   async function handleUpdate(id) {
     setEditLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/${id}`, {
+      const res = await fetch(`${REGISTRY_API}/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ ...editForm, quantity: Number(editForm.quantity) }),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Update failed");
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Update failed"); }
       const updated = await res.json();
-      setItems((prev) => prev.map((item) => (item._id === id ? updated : item)));
+      setItems((prev) => prev.map((i) => (i._id === id ? updated : i)));
       setEditingId(null);
     } catch (err) {
       setError(err.message);
@@ -115,33 +136,140 @@ export default function RegistryApp() {
     }
   }
 
-  const inputClass = "px-3 py-2 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition";
-  const editInputClass = "px-2.5 py-1.5 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition w-full";
+  // ── Shared classes ────────────────────────────────────────────────────────────
+  const inputClass =
+    "px-3 py-2 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition";
+  const editInputClass =
+    "px-2.5 py-1.5 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition w-full";
 
+  // ── No user ───────────────────────────────────────────────────────────────────
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center font-serif text-stone-900">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-2">Gift Registry</h1>
+          <p className="text-stone-400 text-sm font-sans">Please log in to view your registry.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Loading weddings ──────────────────────────────────────────────────────────
+  if (weddingsLoading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center font-serif text-stone-400">
+        <p className="text-sm font-sans italic">Loading your weddings…</p>
+      </div>
+    );
+  }
+
+  // ── No weddings ───────────────────────────────────────────────────────────────
+  if (weddings.length === 0) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center font-serif text-stone-900">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-2">Gift Registry</h1>
+          <p className="text-stone-400 text-sm font-sans">You don't have access to any weddings yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Wedding selector (only if multiple & none selected) ───────────────────────
+  if (!selectedWedding) {
+    return (
+      <div className="min-h-screen bg-stone-50 font-serif text-stone-900 flex flex-col">
+        <div className="border-b-2 border-stone-900 px-8 py-5 pt-20">
+          <h1 className="text-4xl font-bold tracking-tight">Gift Registry</h1>
+          <p className="text-sm text-stone-500 font-sans mt-1">Select a wedding to view its registry</p>
+        </div>
+        <div className="flex-1 px-8 py-8 max-w-2xl">
+          <ul className="space-y-3">
+            {weddings.map((w) => (
+              <li key={w._id}>
+                <button
+                  onClick={() => setSelectedWedding(w)}
+                  className="w-full text-left bg-white border border-stone-200 rounded-lg px-6 py-5 shadow-sm hover:shadow-md hover:border-stone-400 transition-all group"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-lg font-semibold text-stone-900 group-hover:text-indigo-700 transition-colors">
+                        {w.weddingName}
+                      </p>
+                      <p className="text-sm text-stone-400 font-sans mt-0.5">{w.weddingDate}</p>
+                      {w.plannerId?.name && (
+                        <p className="text-xs text-stone-400 font-sans mt-0.5">Planner: {w.plannerId.name}</p>
+                      )}
+                    </div>
+                    <span className="text-stone-300 group-hover:text-indigo-400 transition-colors text-xl">→</span>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main registry view ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-stone-50 font-serif text-stone-900 flex flex-col">
 
       {/* Header */}
-      <div className="border-b-2 border-stone-900 px-8 py-5 flex-shrink-0 pt-20">
-        <h1 className="text-4xl font-bold tracking-tight">Gift Registry</h1>
+      <div className="border-b-2 border-stone-900 px-8 py-5 pt-20 flex items-end justify-between flex-shrink-0">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            {weddings.length > 1 && (
+              <button
+                onClick={() => { setSelectedWedding(null); setItems([]); setError(null); }}
+                className="text-xs font-sans text-stone-400 hover:text-stone-700 transition-colors"
+              >
+                ← All Weddings
+              </button>
+            )}
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight">{selectedWedding.weddingName}</h1>
+          <div className="flex gap-4 mt-1 text-sm text-stone-400 font-sans">
+            <span>{selectedWedding.weddingDate}</span>
+            {selectedWedding.plannerId?.name && <span>Planner: {selectedWedding.plannerId.name}</span>}
+            <span className="capitalize">{selectedWedding.privacy}</span>
+          </div>
+        </div>
+        <span className="text-xs font-sans text-stone-400 capitalize bg-stone-100 px-2.5 py-1 rounded-full">
+          {user.role}
+        </span>
       </div>
 
-      {/* Two-column layout */}
+      {/* Body */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* LEFT: Registry List */}
+        {/* LEFT: Registry list */}
         <div className="flex-1 overflow-y-auto px-8 py-6 border-r border-stone-200">
           <h2 className="text-lg font-bold text-stone-700 mb-4 flex items-center gap-2">
             Registry Items
-            <span className="text-xs font-sans font-normal bg-stone-900 text-white rounded-full px-2.5 py-0.5">{items.length}</span>
+            <span className="text-xs font-sans font-normal bg-stone-900 text-white rounded-full px-2.5 py-0.5">
+              {items.length}
+            </span>
           </h2>
 
-          {items.length === 0 ? (
-            <p className="text-stone-400 italic text-sm">No items yet. Add one using the form.</p>
+          {error && (
+            <p className="text-red-600 text-sm mb-4 bg-red-50 border border-red-200 rounded-md px-3 py-2 font-sans">
+              {error}
+            </p>
+          )}
+
+          {registryLoading ? (
+            <p className="text-stone-400 italic text-sm font-sans">Loading registry…</p>
+          ) : items.length === 0 ? (
+            <p className="text-stone-400 italic text-sm">No items yet.{canEdit ? " Add one using the form." : ""}</p>
           ) : (
             <ul className="space-y-3">
               {items.map((item) => (
-                <li key={item._id} className="bg-white border border-stone-200 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                <li
+                  key={item._id}
+                  className="bg-white border border-stone-200 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                >
                   {/* Card top */}
                   <div className="flex justify-between items-start px-5 py-4">
                     <div className="flex flex-col gap-1">
@@ -164,24 +292,38 @@ export default function RegistryApp() {
                       )}
                     </div>
 
-                    <div className="flex gap-2 ml-4 mt-0.5 flex-shrink-0">
-                      <button
-                        onClick={() => editingId === item._id ? cancelEdit() : startEdit(item)}
-                        className="px-3 py-1.5 text-xs font-sans text-stone-600 border border-stone-200 rounded-md hover:border-stone-400 hover:bg-stone-50 transition-colors cursor-pointer whitespace-nowrap"
-                      >
-                        {editingId === item._id ? "Cancel" : "Edit"}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item._id)}
-                        className="px-3 py-1.5 text-xs font-sans text-red-500 border border-stone-200 rounded-md hover:border-red-300 hover:bg-red-50 transition-colors cursor-pointer whitespace-nowrap"
-                      >
-                        Remove
-                      </button>
-                    </div>
+                    {/* Edit/Delete only for admin & planner */}
+                    {canEdit && (
+                      <div className="flex gap-2 ml-4 mt-0.5 flex-shrink-0">
+                        <button
+                          onClick={() =>
+                            editingId === item._id
+                              ? (setEditingId(null), setEditForm({}))
+                              : (setEditingId(item._id),
+                                setEditForm({
+                                  itemName: item.itemName,
+                                  quantity: item.quantity,
+                                  store: item.store,
+                                  description: item.description || "",
+                                  link: item.link || "",
+                                }))
+                          }
+                          className="px-3 py-1.5 text-xs font-sans text-stone-600 border border-stone-200 rounded-md hover:border-stone-400 hover:bg-stone-50 transition-colors cursor-pointer whitespace-nowrap"
+                        >
+                          {editingId === item._id ? "Cancel" : "Edit"}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item._id)}
+                          className="px-3 py-1.5 text-xs font-sans text-red-500 border border-stone-200 rounded-md hover:border-red-300 hover:bg-red-50 transition-colors cursor-pointer whitespace-nowrap"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Inline edit form */}
-                  {editingId === item._id && (
+                  {/* Inline edit form (admin/planner only) */}
+                  {canEdit && editingId === item._id && (
                     <div className="border-t border-stone-100 bg-stone-50 px-5 py-4">
                       <div className="flex flex-wrap gap-3 mb-3">
                         <div className="flex flex-col flex-1 min-w-[140px]">
@@ -237,10 +379,10 @@ export default function RegistryApp() {
                           disabled={editLoading}
                           className="px-4 py-1.5 bg-stone-900 text-white text-xs font-sans rounded-md hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                         >
-                          {editLoading ? "Saving..." : "Save Changes"}
+                          {editLoading ? "Saving…" : "Save Changes"}
                         </button>
                         <button
-                          onClick={cancelEdit}
+                          onClick={() => { setEditingId(null); setEditForm({}); }}
                           className="px-4 py-1.5 text-xs font-sans text-stone-600 border border-stone-300 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
                         >
                           Cancel
@@ -254,89 +396,126 @@ export default function RegistryApp() {
           )}
         </div>
 
-        {/* RIGHT: Add Form */}
+        {/* RIGHT: Add form (admin/planner) OR Wedding details (client/vendor) */}
         <div className="w-80 flex-shrink-0 overflow-y-auto px-8 py-6 bg-white">
-          <h2 className="text-lg font-bold text-stone-700 mb-5">Add New Item</h2>
 
-          {error && <p className="text-red-600 text-sm mb-3 bg-red-50 border border-red-200 rounded-md px-3 py-2 font-sans">{error}</p>}
-          {success && <p className="text-emerald-600 text-sm mb-3 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2 font-sans">{success}</p>}
+          {canEdit ? (
+            <>
+              <h2 className="text-lg font-bold text-stone-700 mb-5">Add New Item</h2>
 
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col mb-4">
-              <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">Item Name *</label>
-              <input
-                className={inputClass}
-                name="itemName"
-                value={form.itemName}
-                onChange={handleChange}
-                placeholder="e.g. KitchenAid Mixer"
-                required
-              />
-            </div>
+              {success && (
+                <p className="text-emerald-600 text-sm mb-3 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2 font-sans">
+                  {success}
+                </p>
+              )}
 
-            <div className="flex gap-3 mb-4">
-              <div className="flex flex-col w-24">
-                <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">Qty *</label>
-                <input
-                  className={inputClass}
-                  name="quantity"
-                  type="number"
-                  min="1"
-                  value={form.quantity}
-                  onChange={handleChange}
-                  placeholder="1"
-                  required
-                />
+              <form onSubmit={handleSubmit}>
+                <div className="flex flex-col mb-4">
+                  <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">Item Name *</label>
+                  <input
+                    className={inputClass}
+                    name="itemName"
+                    value={form.itemName}
+                    onChange={handleChange}
+                    placeholder="e.g. KitchenAid Mixer"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-3 mb-4">
+                  <div className="flex flex-col w-24">
+                    <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">Qty *</label>
+                    <input
+                      className={inputClass}
+                      name="quantity"
+                      type="number"
+                      min="1"
+                      value={form.quantity}
+                      onChange={handleChange}
+                      placeholder="1"
+                      required
+                    />
+                  </div>
+                  <div className="flex flex-col flex-1">
+                    <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">Store *</label>
+                    <input
+                      className={inputClass}
+                      name="store"
+                      value={form.store}
+                      onChange={handleChange}
+                      placeholder="e.g. Target"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="border-t border-stone-100 my-4" />
+
+                <div className="flex flex-col mb-4">
+                  <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">
+                    Description <span className="normal-case font-normal text-stone-400 tracking-normal">(optional)</span>
+                  </label>
+                  <input
+                    className={inputClass}
+                    name="description"
+                    value={form.description}
+                    onChange={handleChange}
+                    placeholder="Short description"
+                  />
+                </div>
+
+                <div className="flex flex-col mb-6">
+                  <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">
+                    Link <span className="normal-case font-normal text-stone-400 tracking-normal">(optional)</span>
+                  </label>
+                  <input
+                    className={inputClass}
+                    name="link"
+                    value={form.link}
+                    onChange={handleChange}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={formLoading}
+                  className="w-full px-6 py-2.5 bg-stone-900 text-white text-sm font-sans rounded-md hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  {formLoading ? "Adding…" : "Add to Registry"}
+                </button>
+              </form>
+            </>
+          ) : (
+            /* Client / vendor: wedding details panel */
+            <>
+              <h2 className="text-lg font-bold text-stone-700 mb-5">Wedding Details</h2>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-bold text-stone-500 uppercase tracking-wide font-sans mb-0.5">Wedding</p>
+                  <p className="text-sm text-stone-800">{selectedWedding.weddingName}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-stone-500 uppercase tracking-wide font-sans mb-0.5">Date</p>
+                  <p className="text-sm text-stone-800">{selectedWedding.weddingDate}</p>
+                </div>
+                {selectedWedding.plannerId?.name && (
+                  <div>
+                    <p className="text-xs font-bold text-stone-500 uppercase tracking-wide font-sans mb-0.5">Planner</p>
+                    <p className="text-sm text-stone-800">{selectedWedding.plannerId.name}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs font-bold text-stone-500 uppercase tracking-wide font-sans mb-0.5">Privacy</p>
+                  <p className="text-sm text-stone-800 capitalize">{selectedWedding.privacy}</p>
+                </div>
+                <div className="border-t border-stone-100 pt-4">
+                  <p className="text-xs font-bold text-stone-500 uppercase tracking-wide font-sans mb-0.5">Guests on Registry</p>
+                  <p className="text-sm text-stone-800">{selectedWedding.accessList?.length ?? 0} people</p>
+                </div>
               </div>
-              <div className="flex flex-col flex-1">
-                <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">Store *</label>
-                <input
-                  className={inputClass}
-                  name="store"
-                  value={form.store}
-                  onChange={handleChange}
-                  placeholder="e.g. Target"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="border-t border-stone-100 my-4" />
-
-            <div className="flex flex-col mb-4">
-              <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">
-                Description <span className="normal-case font-normal text-stone-400 tracking-normal">(optional)</span>
-              </label>
-              <input
-                className={inputClass}
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                placeholder="Short description"
-              />
-            </div>
-
-            <div className="flex flex-col mb-6">
-              <label className="text-xs font-bold text-stone-600 mb-1 uppercase tracking-wide font-sans">
-                Link <span className="normal-case font-normal text-stone-400 tracking-normal">(optional)</span>
-              </label>
-              <input
-                className={inputClass}
-                name="link"
-                value={form.link}
-                onChange={handleChange}
-                placeholder="https://..."
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full px-6 py-2.5 bg-stone-900 text-white text-sm font-sans rounded-md hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-            >
-              {loading ? "Adding..." : "Add to Registry"}
-            </button>
-          </form>
+            </>
+          )}
         </div>
 
       </div>

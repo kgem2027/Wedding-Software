@@ -19,7 +19,7 @@ router.get('/:email',protect, requireRole('admin', 'planner'), getByEmail);
 router.get('/:id', protect, requireRole('admin'), getById);
 router.post('/', protect, requireRole('admin'), add);
 router.put('/:id', protect, requireRole('admin'), update);
-router.delete('/:id', protect, requireRole('admin'), remove);
+router.delete('/:id', protect, requireRole('admin', 'planner'), remove);
 
 function list(req, res) {
     usersService.listUsers()

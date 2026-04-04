@@ -20,7 +20,7 @@ function AppContent() {
       {!hideNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home user={user} />} />
-        <Route path="/registry" element={<Registry />} />
+        <Route path="/registry" element={<ProtectedRoute allowedRoles={['client']}><Registry /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -31,9 +31,8 @@ function AppContent() {
         }
           />
         <Route path = "/weddings" element = {
-          <ProtectedRoute allowedRoles={['admin', 'planner']}>
             <Weddings />
-          </ProtectedRoute>
+    
         }
         />
       </Routes>
