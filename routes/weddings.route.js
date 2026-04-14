@@ -35,7 +35,7 @@ function getAll(req, res) {
         });
 }
 function getByAuthCode(req, res) {
-    const { authCode, authPassword } = req.query;
+    const { authCode, authPassword } = req.body;
     logger.debug(`Fetching wedding with authCode: ${authCode}`);
     weddingService.getWeddingByAuthCode(authCode, authPassword)
         .then(wedding => {
