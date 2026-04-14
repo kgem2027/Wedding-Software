@@ -14,10 +14,12 @@ const logger = pino({
     }
 });
 router.get('/',protect, requireRole('admin','planner','client','vendor'), getAll);
+router.get('/auth', getByAuthCode);
 router.post('/create', protect, requireRole('admin','planner'), create);
 router.get('/:id',protect, requireRole('admin','planner','client','vendor'), checkWeddingAccess, getById);
 router.put('/:id', protect, requireRole('admin','planner'), update);
 router.delete('/:id', protect, requireRole('admin'), remove);
+
 
 function getAll(req, res) {
     const{_id:userId, role} = req.user;
@@ -32,6 +34,25 @@ function getAll(req, res) {
             res.status(500).json({ error: 'Internal server error' });
         });
 }
+function getByAuthCode(req, res) {
+    const { authCode, authPassword } = req.query;
+    logger.debug(`Fetching wedding with authCode: ${authCode}`);
+    weddingService.getWeddingByAuthCode(authCode, authPassword)
+        .then(wedding => {
+            if (!wedding) {
+                logger.warn(`Wedding with authCode ${authCode} not found`);
+                res.status(404).json({ error: 'Wedding not found' });
+                return;
+            }
+            logger.debug(`Found wedding: ${JSON.stringify(wedding)}`);
+            res.json(wedding);
+        })
+        .catch(error => {
+            logger.error('Error fetching wedding:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        });
+}
+
 function create(req, res) {
     const { weddingName, weddingDate, plannerId, accessList, privacy } = req.body;
      logger.debug(`Creating wedding with data: ${JSON.stringify(req.body)}`);

@@ -1,4 +1,14 @@
 import mongoose from "mongoose";
+const generateRandomString = (length) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+const generateAuthCode = () => generateRandomString(5);
+const generateAuthPassword = () => generateRandomString(16);
 const accessEntrySchema = new mongoose.Schema({
     userId:{type: mongoose.Schema.Types.ObjectId, ref:'User', required:true},
     role:{type:String, enum:['vendor', 'client'], required:true},
@@ -11,7 +21,13 @@ const weddingsSchema = new mongoose.Schema({
     plannerId:{type: mongoose.Schema.Types.ObjectId, ref:'User', required:false},
     accessList:[accessEntrySchema],
     privacy: {type: String, enum: ["private", "public"], default: 'private'},
-    createdAt: {type: Date, default: Date.now}
+    createdAt: {type: Date, default: Date.now},
+    authCode: {type: String, required: true, default: generateAuthCode, unique: true},
+    authPassword: {type: String, required: true, default: generateAuthPassword, unique: true},
 });
+
+
+
+
 const Weddings = mongoose.model('Wedding', weddingsSchema);
 export default Weddings;

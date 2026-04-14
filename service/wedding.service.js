@@ -35,11 +35,14 @@ async function deleteWedding(id) {
 async function getWeddingsByUserId(userId) {
     return await Weddings.find({ 'accessList.userId': userId });
 }
+async function getWeddingByAuthCode(authCode, authPassword) {
+    return await Weddings.findOne({ authCode, authPassword });
+}
 export default {
     createWedding,
     getWeddingById,
     updateWedding,
     deleteWedding,
     getWeddingsByUserId,
-    getAllWeddings
-};
+    getAllWeddings,
+    getWeddingByAuthCode};
