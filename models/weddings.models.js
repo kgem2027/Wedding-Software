@@ -7,7 +7,6 @@ const generateRandomString = (length) => {
   }
   return result;
 };
-const generateAuthCode = () => generateRandomString(5);
 const generateAuthPassword = () => generateRandomString(16);
 const accessEntrySchema = new mongoose.Schema({
     userId:{type: mongoose.Schema.Types.ObjectId, ref:'User', required:true},
@@ -22,7 +21,6 @@ const weddingsSchema = new mongoose.Schema({
     accessList:[accessEntrySchema],
     privacy: {type: String, enum: ["private", "public"], default: 'private'},
     createdAt: {type: Date, default: Date.now},
-    authCode: {type: String, required: true, default: generateAuthCode, unique: true},
     authPassword: {type: String, required: true, default: generateAuthPassword, unique: true},
 });
 

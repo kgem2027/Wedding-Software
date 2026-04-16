@@ -4,11 +4,11 @@ import AuthenticationBackground from "./pageComponents/AuthenticationBackground.
 import { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../components/authProvider.jsx'  // ← add this
+import { useAuth } from '../components/authProvider.jsx'  
 
-const Register = () => {  // ← remove setUser prop
+const Register = () => {  
   const navigate = useNavigate()
-  const { login } = useAuth()  // ← use context
+  const { login } = useAuth()  
 
   const [errors, setErrors] = useState('')
   const [formData, setFormData] = useState({

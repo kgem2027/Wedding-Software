@@ -14,7 +14,7 @@ const logger = pino({
     }
 });
 router.get('/',protect, requireRole('admin','planner','client','vendor'), getAll);
-router.get('/auth', getByAuthCode);
+router.get('/auth/:authPassword', getByAuthCode);
 router.post('/create', protect, requireRole('admin','planner'), create);
 router.get('/:id',protect, requireRole('admin','planner','client','vendor'), checkWeddingAccess, getById);
 router.put('/:id', protect, requireRole('admin','planner'), update);
@@ -35,12 +35,12 @@ function getAll(req, res) {
         });
 }
 function getByAuthCode(req, res) {
-    const { authCode, authPassword } = req.body;
-    logger.debug(`Fetching wedding with authCode: ${authCode}`);
-    weddingService.getWeddingByAuthCode(authCode, authPassword)
+    const { authPassword } = req.params;
+    logger.debug(`Fetching wedding with authPassword: ${authPassword}`);
+    weddingService.getWeddingByAuthCode(authPassword)
         .then(wedding => {
             if (!wedding) {
-                logger.warn(`Wedding with authCode ${authCode} not found`);
+                logger.warn(`Wedding with authCode ${authPassword} not found`);
                 res.status(404).json({ error: 'Wedding not found' });
                 return;
             }
