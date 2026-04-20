@@ -15,8 +15,8 @@ const accessEntrySchema = new mongoose.Schema({
     }, {_id: false}
 );
 const guestSchema = new mongoose.Schema({
-    firstName: {type:String, required:true},
-    lastName: {type: String, required:true}
+  firstName : {type: String},
+  lastName : {type:String}
 })
 
 const weddingsSchema = new mongoose.Schema({
@@ -27,7 +27,7 @@ const weddingsSchema = new mongoose.Schema({
     privacy: {type: String, enum: ["private", "public"], default: 'private'},
     createdAt: {type: Date, default: Date.now},
     authPassword: {type: String, required: true, default: generateAuthPassword, unique: true},
-    guestList: [guestSchema]
+    guestList:[guestSchema]
 });
 
 

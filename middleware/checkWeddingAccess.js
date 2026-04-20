@@ -22,6 +22,7 @@ const checkWeddingAccess = async (req, res, next) => {
         return next();
     }
 
+
     // Clients and vendors must be in the accessList
     const hasAccess = wedding.accessList.some(
         entry => entry.userId.toString() === userId.toString()

@@ -6,19 +6,24 @@ import { useNavigate, Link } from 'react-router-dom'
 
 const WeddingAccess = () => {
   const navigate = useNavigate()
-  const [authPassword, setAuthPassword] = useState('')
+  const [formData, setFormData] = useState({ firstName: '', lastName: '', authPassword: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const handleChange = (e) => setFormData({ ...formData, [e.target.id]: e.target.value })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      const res = await axios.get(`/api/weddings/auth/${authPassword}`)
-      navigate(`/wedding/details`, { state: res.data })
+      const res = await axios.post('/api/auth/guest-login', formData)
+      localStorage.setItem('token', res.data.token)
+      localStorage.setItem('user', JSON.stringify(res.data.user))
+      const weddingRes = await axios.get(`/api/weddings/auth/${formData.authPassword}`)
+      navigate(`/wedding/details`, { state: weddingRes.data })
     } catch (err) {
-      setError(err.response?.data?.error || 'Wedding not found. Please check your auth code.')
+      setError(err.response?.data?.message || 'Access denied. Check your details and try again.')
     } finally {
       setLoading(false)
     }
@@ -51,8 +56,34 @@ const WeddingAccess = () => {
               id="authPassword"
               className="w-full p-3 border border-gray-500 bg-gray-900 text-white rounded-md focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your wedding auth code"
-              value={authPassword}
-              onChange={e => setAuthPassword(e.target.value)}
+              value={formData.authPassword}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+            />
+          </div>
+          <div className="mt-4">
+            <label className="block text-white text-sm font-medium mb-2">First Name:</label>
+            <input
+              type="text"
+              id="firstName"
+              className="w-full p-3 border border-gray-500 bg-gray-900 text-white rounded-md focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your first name"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+            />
+          </div>
+          <div className="mt-4">
+            <label className="block text-white text-sm font-medium mb-2">Last Name:</label>
+            <input
+              type="text"
+              id="lastName"
+              className="w-full p-3 border border-gray-500 bg-gray-900 text-white rounded-md focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your last name"
+              value={formData.lastName}
+              onChange={handleChange}
               required
               autoComplete="off"
             />

@@ -88,7 +88,7 @@ const Login = () => {
           <p className="text-white text-sm">
             Have a wedding auth code?{' '}
             <Link
-              to="/weddingAuth"
+              to="/guest-login"
               className="text-blue-400 hover:text-blue-300 underline"
             >
               Access a wedding

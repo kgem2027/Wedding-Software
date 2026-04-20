@@ -14,15 +14,15 @@ import { AuthProvider, useAuth } from "./components/authProvider.jsx"
 function AppContent() {
   const { user } = useAuth()  
   const location = useLocation()
-  const hideNavbar = ['/login', '/register', '/weddingAuth', '/wedding/details'].some(path => 
+  const hideNavbar = ['/login', '/register', '/guest-login', '/wedding/details'].some(path => 
   location.pathname.replace(/\/$/, '') === path
   )
   return (
     <>
       {!hideNavbar && <Navbar />}
       <Routes>
-        <Route path="/" element={<Home user={user} />} />
-        <Route path="/weddingAuth" element={<WeddingAccess />} />
+        <Route path="/" element={<ProtectedRoute allowedRoles = {['client', 'vendor', 'planner']}><Home user={user} /></ProtectedRoute> } />
+        <Route path="/guest-login" element={<WeddingAccess />} />
         <Route path="/wedding/details" element={<WeddingDetails />} />
         <Route path="/registry" element={<ProtectedRoute allowedRoles={['client']}><Registry /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />
