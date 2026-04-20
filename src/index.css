@@ -1,6 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400..700;1,400..700&family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&family=The+Girl+Next+Door&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Advent+Pro:ital,wght@0,100..900;1,100..900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 * {
   margin: 0;
   padding: 0;
@@ -11,4 +14,15 @@ html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
+}
+.auth-text {
+  font-family: 'Lobster Two', cursive;
+  margin-top: 200px; ;
+}
+
+.info-text {
+  font-family: 'The Girl Next Door', cursive;
+}
+.info-title-text {
+  font-family: 'Advent Pro', sans-serif;
 }

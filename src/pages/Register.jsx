@@ -4,34 +4,29 @@ import AuthenticationBackground from "./pageComponents/AuthenticationBackground.
 import { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../components/authProvider.jsx'  
 
-const Register = ({ setUser }) => {
+const Register = () => {  
   const navigate = useNavigate()
+  const { login } = useAuth()  
 
   const [errors, setErrors] = useState('')
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-  })  
+  })
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value
-    })
+    setFormData({ ...formData, [e.target.id]: e.target.value })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('/api/users/register', formData)
-      localStorage.setItem('token', res.data.token)
-      console.log(res.data)
-      setUser(res.data.user)
+      const res = await axios.post('/api/auth/register', formData) 
+      login(res.data.user, res.data.token) 
       navigate('/')
-      
     } catch (error) {
       setErrors(error.response?.data?.message || 'An error occurred during registration.')
     }
@@ -43,6 +38,7 @@ const Register = ({ setUser }) => {
       <GradientText
         colors={["#ff6b9d", "#ffffff", "#ff8585"]}
         animationSpeed={4}
+        className = "auth-text"
         >
             Register
         </GradientText>

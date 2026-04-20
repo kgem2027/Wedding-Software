@@ -1,45 +1,56 @@
-import { BrowserRouter as Router, Routes,
-  Route,
-  Navigate
-  } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import Home from "./pages/Home"
 import Login from "./pages/login"
 import Register from "./pages/Register"
-import { useEffect, useState } from "react"
-import axios from "axios"
+import Registry from "./pages/Registry"
+import EditRoster from "./pages/EditRoster"
+import Weddings from "./pages/Weddings"
+import WeddingAccess from "./pages/WeddingAuth"
+import WeddingDetails from "./pages/WeddingDetails"
+import ProtectedRoute from "./components/ProtectedRoutes.jsx"
+import { AuthProvider, useAuth } from "./components/authProvider.jsx" 
 
-function App() {
-  const [user, setUser] = useState(null)
-  const [error,setError] = useState('')
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem('token')
-      if (token) {
-        try {
-          const res = await axios.get('/api/auth/user', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-          setUser(res.data)
-        } catch (err) {
-          setError('Failed to fetch user')
-          localStorage.removeItem('token')
-        }
-      }
-    }
-
-    fetchUser()
-  }, [])
+function AppContent() {
+  const { user } = useAuth()  
+  const location = useLocation()
+  const hideNavbar = ['/login', '/register', '/guest-login', '/wedding/details'].some(path => 
+  location.pathname.replace(/\/$/, '') === path
+  )
   return (
-    <Router>
-      <Navbar />
+    <>
+      {!hideNavbar && <Navbar />}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login setUser={setUser} />} />
-        <Route path="/register" element={<Register setUser={setUser} />} />
+        <Route path="/" element={<ProtectedRoute allowedRoles = {['client', 'vendor', 'planner']}><Home user={user} /></ProtectedRoute> } />
+        <Route path="/guest-login" element={<WeddingAccess />} />
+        <Route path="/wedding/details" element={<WeddingDetails />} />
+        <Route path="/registry" element={<ProtectedRoute allowedRoles={['client']}><Registry /></ProtectedRoute>} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path = "/edit/roster" element = {
+          <ProtectedRoute allowedRoles={['admin']}>
+            <EditRoster />
+          </ProtectedRoute>
+        }
+          />
+        <Route path = "/weddings" element = {
+            <Weddings />
+    
+        }
+        />
       </Routes>
-
-    </Router>
+    </>
   )
 }
+
+function App() {
+  return (
+    <AuthProvider>  
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
+  )
+}
+
 export default App
