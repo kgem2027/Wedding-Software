@@ -14,7 +14,7 @@ import { AuthProvider, useAuth } from "./components/authProvider.jsx"
 function AppContent() {
   const { user } = useAuth()  
   const location = useLocation()
-  const hideNavbar = ['/login', '/register', '/weddingAuth'].some(path => 
+  const hideNavbar = ['/login', '/register', '/weddingAuth', '/wedding/details'].some(path => 
   location.pathname.replace(/\/$/, '') === path
   )
   return (

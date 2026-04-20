@@ -14,6 +14,11 @@ const accessEntrySchema = new mongoose.Schema({
     grantedBy:{type: mongoose.Schema.Types.ObjectId, ref:'User', required:true}
     }, {_id: false}
 );
+const guestSchema = new mongoose.Schema({
+    firstName: {type:String, required:true},
+    lastName: {type: String, required:true}
+})
+
 const weddingsSchema = new mongoose.Schema({
     weddingName:{type:String, required:[true, "Please provide a name for the wedding"]},
     weddingDate:{type:String, required:[true, "Please provide a date for the wedding"]},
@@ -22,6 +27,7 @@ const weddingsSchema = new mongoose.Schema({
     privacy: {type: String, enum: ["private", "public"], default: 'private'},
     createdAt: {type: Date, default: Date.now},
     authPassword: {type: String, required: true, default: generateAuthPassword, unique: true},
+    guestList: [guestSchema]
 });
 
 

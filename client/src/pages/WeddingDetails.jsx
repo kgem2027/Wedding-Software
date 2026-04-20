@@ -44,11 +44,6 @@ const WeddingDetails = () => {
     )
   }
 
-  const vendors =
-    wedding.accessList?.filter((entry) => entry.role === "vendor") || []
-  const clients =
-    wedding.accessList?.filter((entry) => entry.role === "client") || []
-
   return (
     <div className="min-h-screen bg-stone-50 font-serif text-stone-900 flex flex-col">
       <div className="border-b-2 border-stone-900 px-8 py-5 pt-20 flex items-end justify-between flex-shrink-0">
