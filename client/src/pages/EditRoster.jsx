@@ -15,6 +15,11 @@ const EditRoster = () => {
   const [modalError, setModalError] = useState('')
   const [modalLoading, setModalLoading] = useState(false)
 
+  const [vendorModalOpen, setVendorModalOpen] = useState(false)
+  const [vendorModalData, setVendorModalData] = useState({ name: '', service: '', _id: '' })
+  const [vendorModalError, setVendorModalError] = useState('')
+  const [vendorModalLoading, setVendorModalLoading] = useState(false)
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -101,6 +106,30 @@ const EditRoster = () => {
     }
   }
 
+  const openVendorEditModal = (vendor, e) => {
+    e.stopPropagation()
+    setVendorModalData({ name: vendor.name, service: vendor.service || '', _id: vendor._id })
+    setVendorModalError('')
+    setVendorModalOpen(true)
+  }
+
+  const handleVendorSave = async () => {
+    setVendorModalLoading(true)
+    setVendorModalError('')
+    try {
+      const res = await axios.put(`/api/users/${vendorModalData._id}`, {
+        name: vendorModalData.name,
+        service: vendorModalData.service
+      })
+      setVendors(prev => prev.map(v => v._id === vendorModalData._id ? { ...v, ...res.data } : v))
+      setVendorModalOpen(false)
+    } catch (err) {
+      setVendorModalError(err.response?.data?.error || 'Something went wrong.')
+    } finally {
+      setVendorModalLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-indigo-50 flex items-center justify-center">
@@ -145,15 +174,25 @@ const EditRoster = () => {
               vendors.map(vendor => (
                 <div
                   key={vendor._id}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent hover:bg-indigo-50 hover:border-indigo-100 transition-all"
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent hover:bg-indigo-50 hover:border-indigo-100 transition-all group"
                 >
                   <div className="w-9 h-9 rounded-full bg-pink-100 text-pink-500 flex items-center justify-center text-xs font-semibold flex-shrink-0">
                     {initials(vendor.name)}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-800">{vendor.name}</p>
                     <p className="text-xs text-gray-400 truncate">{vendor.email}</p>
+                    {vendor.service
+                      ? <span className="inline-block mt-0.5 text-xs bg-indigo-100 text-indigo-500 px-2 py-0.5 rounded-full">{vendor.service}</span>
+                      : <span className="inline-block mt-0.5 text-xs text-gray-300 italic">No service listed</span>
+                    }
                   </div>
+                  <button
+                    onClick={e => openVendorEditModal(vendor, e)}
+                    className="text-xs px-3 py-1 rounded-lg border border-indigo-200 text-indigo-400 hover:bg-indigo-100 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0"
+                  >
+                    Edit
+                  </button>
                 </div>
               ))
             )}
@@ -262,6 +301,45 @@ const EditRoster = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Edit Vendor Modal ── */}
+      {vendorModalOpen && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onClick={() => setVendorModalOpen(false)}>
+          <div className="bg-white rounded-2xl border border-indigo-100 shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-gray-800 mb-5">Edit vendor</h2>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={vendorModalData.name}
+                  onChange={e => setVendorModalData({ ...vendorModalData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-indigo-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#92a5e8] focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Service Provided</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Photography, Catering, Florist…"
+                  value={vendorModalData.service}
+                  onChange={e => setVendorModalData({ ...vendorModalData, service: e.target.value })}
+                  className="w-full px-3 py-2 border border-indigo-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#92a5e8] focus:border-transparent"
+                />
+              </div>
+            </div>
+            {vendorModalError && <p className="text-xs text-red-400 mt-3">{vendorModalError}</p>}
+            <div className="flex gap-2 justify-end mt-5">
+              <button onClick={() => setVendorModalOpen(false)} className="px-4 py-2 text-sm border border-indigo-200 rounded-lg text-gray-500 hover:bg-indigo-50 transition-all">
+                Cancel
+              </button>
+              <button onClick={handleVendorSave} disabled={vendorModalLoading} className="px-4 py-2 text-sm bg-pink-300/80 hover:bg-pink-400 text-white font-semibold rounded-lg transition-all disabled:opacity-50">
+                {vendorModalLoading ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Add / Edit Modal ── */}
       {modalOpen && (

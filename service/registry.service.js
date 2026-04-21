@@ -43,6 +43,14 @@ async function getRegistryItemsByWeddingId(weddingId) {
     logger.info(`Fetching registry items for wedding ID: ${weddingId}`);
     return await Registry.find({ weddingId });
 }
+async function markAsBought(id, buyerName) {
+    logger.info(`Marking registry item ${id} as bought by ${buyerName}`);
+    return await Registry.findByIdAndUpdate(
+        id,
+        { bought: true, boughtBy: buyerName },
+        { new: true }
+    );
+}
 export default {
     getRegistryItemsByWeddingId,
     listRegistry,
@@ -51,5 +59,6 @@ export default {
     updateRegistryItem,
     deleteRegistryItem,
     getRegistryItemByName,
-    getRegistryItemsByStore
+    getRegistryItemsByStore,
+    markAsBought
 };

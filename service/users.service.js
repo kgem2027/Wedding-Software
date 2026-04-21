@@ -20,9 +20,10 @@ async function addUser(name, email, password, role) {
     const user = new Users({ name, email, password, role });
     return await user.save();
 }
-async function updateUser(id, name, email, password, role) {
+async function updateUser(id, name, email, password, role, service) {
   const data = { name, email, role };
   if (password) data.password = password;
+  if (service !== undefined) data.service = service;
   return await Users.findByIdAndUpdate(id, data, { new: true });
 }
 async function deleteUser(id) {
@@ -31,6 +32,9 @@ async function deleteUser(id) {
 async function getUserByEmail(searchEmail) {
     return await Users.findOne({ email: searchEmail });
 }
+async function getUsersByRole(role) {
+    return await Users.find({ role });
+}
 
 export default {
     listUsers,
@@ -38,5 +42,6 @@ export default {
     addUser,
     updateUser,
     deleteUser,
-    getUserByEmail
+    getUserByEmail,
+    getUsersByRole
 };

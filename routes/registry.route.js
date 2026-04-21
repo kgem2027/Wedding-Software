@@ -3,6 +3,7 @@ import pino from 'pino';
 const router = express.Router();
 import registryService from '../service/registry.service.js';
 import Registry from '../models/registry.models.js';
+import { protect } from '../middleware/auth.js';
 const logger = pino({
     level: 'debug',
     transport: {
@@ -19,6 +20,7 @@ router.get('/search/registryItemsByStore/:store', getByStore);
 router.get('/registryItemsByWeddingId/:weddingId', getByWeddingId);
 router.get('/:id', getById);
 router.post('/', add);
+router.patch('/:id/buy', protect, buyItem);
 router.put('/:id', update);
 router.delete('/:id', remove);
 
@@ -92,6 +94,23 @@ function remove(req, res) {
         .then(result => {
             if (result) {
                 res.json({ message: 'Registry item deleted successfully' });
+            } else {
+                res.status(404).json({ error: 'Registry item not found' });
+            }
+        })
+        .catch(err => res.status(500).json({ error: err.message }));
+}
+function buyItem(req, res) {
+    const { id } = req.params;
+    const user = req.user;
+    const buyerName = user.role === 'guest'
+        ? `${user.firstName} ${user.lastName}`
+        : user.name;
+    logger.debug(`Marking item ${id} as bought by ${buyerName}`);
+    registryService.markAsBought(id, buyerName)
+        .then(item => {
+            if (item) {
+                res.json(item);
             } else {
                 res.status(404).json({ error: 'Registry item not found' });
             }

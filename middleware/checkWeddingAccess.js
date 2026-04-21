@@ -24,11 +24,13 @@ const checkWeddingAccess = async (req, res, next) => {
 
 
     // Clients and vendors must be in the accessList
-    const hasAccess = wedding.accessList.some(
+    const hasAccess = 
+    wedding.privacy === "public" ||    
+    wedding.accessList.some(
         entry => entry.userId.toString() === userId.toString()
     );
 
-    if (!hasAccess) {
+    if (!hasAccess) { 
         logger.debug(`User ${userId} not in accessList for wedding ${weddingId}`);
         return res.status(403).json({ message: 'You do not have access to this wedding' });
     }

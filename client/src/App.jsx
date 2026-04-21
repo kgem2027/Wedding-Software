@@ -21,7 +21,7 @@ function AppContent() {
     <>
       {!hideNavbar && <Navbar />}
       <Routes>
-        <Route path="/" element={<ProtectedRoute allowedRoles = {['client', 'vendor', 'planner']}><Home user={user} /></ProtectedRoute> } />
+        <Route path="/" element={<ProtectedRoute><Home user={user} /></ProtectedRoute>} />
         <Route path="/guest-login" element={<WeddingAccess />} />
         <Route path="/wedding/details" element={<WeddingDetails />} />
         <Route path="/registry" element={<ProtectedRoute allowedRoles={['client']}><Registry /></ProtectedRoute>} />

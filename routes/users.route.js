@@ -15,6 +15,7 @@ const logger = pino({
 });
 // routes
 router.get('/', protect, requireRole('admin'), list);
+router.get('/role/vendor', protect, requireRole('admin', 'planner'), listVendors);
 router.get('/email/:email',protect, requireRole('admin', 'planner'), getByEmail);
 router.get('/:id', protect, requireRole('admin'), getById);
 router.post('/', protect, requireRole('admin'), add);
@@ -23,6 +24,11 @@ router.delete('/:id', protect, requireRole('admin', 'planner'), remove);
 
 function list(req, res) {
     usersService.listUsers()
+        .then(users => res.json(users))
+        .catch(error => res.status(500).json({ error: 'Internal server error: ' + error }));
+}
+function listVendors(req, res) {
+    usersService.getUsersByRole('vendor')
         .then(users => res.json(users))
         .catch(error => res.status(500).json({ error: 'Internal server error: ' + error }));
 }
@@ -57,8 +63,8 @@ function add(req, res) {
 }
 function update(req, res) {
     const id = req.params.id;
-    const { name, email, password, role } = req.body;
-    usersService.updateUser(id, name, email, password, role)
+    const { name, email, password, role, service } = req.body;
+    usersService.updateUser(id, name, email, password, role, service)
         .then(user => {
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });

@@ -1,9 +1,15 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from './authProvider.jsx';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/');
+  }
 
   return (
     <nav className="w-full bg-[#92a5e8] px-10 py-3 flex flex-row items-center gap-6 fixed top-0 left-0 z-50">
@@ -92,6 +98,17 @@ const Navbar = () => {
             </NavLink>
           </li>
       </ul>
+
+      {user && (
+        <div className="ml-auto">
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 rounded-lg font-semibold text-sm text-white bg-red-400/80 hover:bg-red-500 transition-all duration-200 hover:shadow-md"
+          >
+            Logout
+          </button>
+        </div>
+      )}
     </nav>
   );
 };

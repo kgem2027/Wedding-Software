@@ -1,16 +1,33 @@
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import axios from "axios"
+import { useAuth } from "../components/authProvider.jsx"
 
 const REGISTRY_API = "/api/registry"
 
+function getAuthHeaders() {
+  const token = localStorage.getItem("token")
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
 const WeddingDetails = () => {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { logout } = useAuth()
   const wedding = location.state
+
+  function handleLogout() {
+    logout()
+    navigate('/')
+  }
 
   const [registryItems, setRegistryItems] = useState([])
   const [registryLoading, setRegistryLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [buyingId, setBuyingId] = useState(null)
 
   useEffect(() => {
     const fetchRegistryItems = async () => {
@@ -32,6 +49,26 @@ const WeddingDetails = () => {
       fetchRegistryItems()
     }
   }, [wedding])
+
+  async function handleBuy(id) {
+    setBuyingId(id)
+    try {
+      const res = await fetch(`${REGISTRY_API}/${id}/buy`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "Could not mark as bought")
+      }
+      const updated = await res.json()
+      setRegistryItems((prev) => prev.map((i) => (i._id === id ? updated : i)))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBuyingId(null)
+    }
+  }
 
   if (!wedding) {
     return (
@@ -56,9 +93,17 @@ const WeddingDetails = () => {
           </div>
         </div>
 
-        <span className="text-xs font-sans text-stone-400 bg-stone-100 px-2.5 py-1 rounded-full">
-          Guest View
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-sans text-stone-400 bg-stone-100 px-2.5 py-1 rounded-full">
+            Guest View
+          </span>
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 text-xs font-sans text-white bg-red-400 hover:bg-red-500 rounded-md transition-colors cursor-pointer"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -87,11 +132,22 @@ const WeddingDetails = () => {
                   key={item._id}
                   className="bg-white border border-stone-200 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                 >
-                  <div className="px-5 py-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-base font-semibold text-stone-900">
-                        {item.itemName}
-                      </span>
+                  <div className="px-5 py-4 flex justify-between items-start gap-4">
+                    <div className="flex flex-col gap-1 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-base font-semibold ${item.bought ? "line-through text-stone-400" : "text-stone-900"}`}>
+                          {item.itemName}
+                        </span>
+                        {item.bought ? (
+                          <span className="text-xs font-sans bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                            Bought by {item.boughtBy}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-sans bg-stone-100 text-stone-400 border border-stone-200 rounded-full px-2 py-0.5">
+                            Available
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-stone-400 font-sans">
                         Qty: {item.quantity}&nbsp;&nbsp;·&nbsp;&nbsp;Store: {item.store}
                       </span>
@@ -100,19 +156,29 @@ const WeddingDetails = () => {
                         <p className="text-sm text-stone-500 mt-0.5">{item.description}</p>
                       )}
 
-                    {item.link ? (
-                    <a
-                        href={item.link.startsWith("http") ? item.link : `https://${item.link}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-sans"
-                    >
-                        View Item →
-                    </a>
-                    ) : (
-                    <span className="text-stone-400 text-sm italic">No link provided</span>
-                    )}
+                      {item.link ? (
+                        <a
+                          href={item.link.startsWith("http") ? item.link : `https://${item.link}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-sans"
+                        >
+                          View Item →
+                        </a>
+                      ) : (
+                        <span className="text-stone-400 text-sm italic">No link provided</span>
+                      )}
                     </div>
+
+                    {!item.bought && (
+                      <button
+                        onClick={() => handleBuy(item._id)}
+                        disabled={buyingId === item._id}
+                        className="px-3 py-1.5 text-xs font-sans text-emerald-700 border border-emerald-300 rounded-md hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer whitespace-nowrap flex-shrink-0 mt-0.5"
+                      >
+                        {buyingId === item._id ? "Buying…" : "Buy This"}
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}

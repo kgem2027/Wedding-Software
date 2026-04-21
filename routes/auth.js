@@ -108,10 +108,12 @@ router.post("/guest-login", async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    const populatedWedding = await Weddings.findById(wedding._id).populate('plannerId', 'name');
+
     return res.status(200).json({
       message: "Guest login successful",
       token,
-      weddingId: wedding._id,
+      wedding: populatedWedding,
       user: { role: 'guest', firstName, lastName, weddingId: wedding._id }
     });
   } catch (error) {

@@ -12,32 +12,25 @@ function getAuthHeaders() {
 }
 
 export default function RegistryApp() {
-  // Auth / user state
   const [user, setUser] = useState(null); // { _id, role, name }
 
-  // Wedding selection
   const [weddings, setWeddings] = useState([]);
   const [selectedWedding, setSelectedWedding] = useState(null);
   const [weddingsLoading, setWeddingsLoading] = useState(true);
 
-  // Registry items
   const [items, setItems] = useState([]);
   const [registryLoading, setRegistryLoading] = useState(false);
 
-  // Add form
   const [form, setForm] = useState({ itemName: "", quantity: "", store: "", description: "", link: "" });
   const [formLoading, setFormLoading] = useState(false);
 
-  // Edit
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [editLoading, setEditLoading] = useState(false);
 
-  // Feedback
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // ── On mount: read user from localStorage (set by your login flow) ──────────
   useEffect(() => {
     const stored = localStorage.getItem("user");
     if (stored) {
@@ -45,37 +38,37 @@ export default function RegistryApp() {
     }
   }, []);
 
-  // ── Fetch weddings the user has access to ───────────────────────────────────
+
   useEffect(() => {
     if (!user) return;
     setWeddingsLoading(true);
     fetch(WEDDINGS_API, { headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data) => {
-        setWeddings(data);
-        // Auto-select if only one
-        if (data.length === 1) setSelectedWedding(data[0]);
+        const accessible = data.filter(w =>
+          w.accessList?.some(a => String(a.userId?._id ?? a.userId) === String(user._id))
+        );
+        setWeddings(accessible);
+        if (accessible.length === 1) setSelectedWedding(accessible[0]);
       })
       .catch(() => setError("Failed to load your weddings."))
       .finally(() => setWeddingsLoading(false));
   }, [user]);
 
-  // ── Fetch registry items when a wedding is selected ─────────────────────────
   useEffect(() => {
     if (!selectedWedding) return;
     setRegistryLoading(true);
     setItems([]);
-    fetch(`${REGISTRY_API}?weddingId=${selectedWedding._id}`, { headers: getAuthHeaders() })
+    fetch(`${REGISTRY_API}/registryItemsByWeddingId/${selectedWedding._id}`, { headers: getAuthHeaders() })
       .then((r) => r.json())
       .then(setItems)
       .catch(() => setError("Failed to load registry items."))
       .finally(() => setRegistryLoading(false));
   }, [selectedWedding]);
 
-  const isClient = user?.role === "client" || user?.role === "vendor";
-  const canEdit = user?.role === "admin" || user?.role === "planner";
+  const canEdit   = user?.role === "admin" || user?.role === "planner";
+  const canManage = canEdit || user?.role === "client";
 
-  // ── Handlers ─────────────────────────────────────────────────────────────────
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -142,10 +135,9 @@ export default function RegistryApp() {
   const editInputClass =
     "px-2.5 py-1.5 border border-stone-300 rounded-md text-sm font-sans bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition w-full";
 
-  // ── No user ───────────────────────────────────────────────────────────────────
   if (!user) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center font-serif text-stone-900">
+      <div className="h-screen bg-stone-50 flex items-center justify-center font-serif text-stone-900">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Gift Registry</h1>
           <p className="text-stone-400 text-sm font-sans">Please log in to view your registry.</p>
@@ -154,19 +146,17 @@ export default function RegistryApp() {
     );
   }
 
-  // ── Loading weddings ──────────────────────────────────────────────────────────
   if (weddingsLoading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center font-serif text-stone-400">
+      <div className="h-screen bg-stone-50 flex items-center justify-center font-serif text-stone-400">
         <p className="text-sm font-sans italic">Loading your weddings…</p>
       </div>
     );
   }
 
-  // ── No weddings ───────────────────────────────────────────────────────────────
   if (weddings.length === 0) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center font-serif text-stone-900">
+      <div className="h-screen bg-stone-50 flex items-center justify-center font-serif text-stone-900">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Gift Registry</h1>
           <p className="text-stone-400 text-sm font-sans">You don't have access to any weddings yet.</p>
@@ -175,15 +165,14 @@ export default function RegistryApp() {
     );
   }
 
-  // ── Wedding selector (only if multiple & none selected) ───────────────────────
   if (!selectedWedding) {
     return (
-      <div className="min-h-screen bg-stone-50 font-serif text-stone-900 flex flex-col">
+      <div className="h-screen bg-stone-50 font-serif text-stone-900 flex flex-col">
         <div className="border-b-2 border-stone-900 px-8 py-5 pt-20">
           <h1 className="text-4xl font-bold tracking-tight">Gift Registry</h1>
           <p className="text-sm text-stone-500 font-sans mt-1">Select a wedding to view its registry</p>
         </div>
-        <div className="flex-1 px-8 py-8 max-w-2xl">
+        <div className="flex-1 overflow-y-auto px-8 py-8 max-w-2xl">
           <ul className="space-y-3">
             {weddings.map((w) => (
               <li key={w._id}>
@@ -212,9 +201,8 @@ export default function RegistryApp() {
     );
   }
 
-  // ── Main registry view ────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-stone-50 font-serif text-stone-900 flex flex-col">
+    <div className="h-screen bg-stone-50 font-serif text-stone-900 flex flex-col">
 
       {/* Header */}
       <div className="border-b-2 border-stone-900 px-8 py-5 pt-20 flex items-end justify-between flex-shrink-0">
@@ -262,7 +250,7 @@ export default function RegistryApp() {
           {registryLoading ? (
             <p className="text-stone-400 italic text-sm font-sans">Loading registry…</p>
           ) : items.length === 0 ? (
-            <p className="text-stone-400 italic text-sm">No items yet.{canEdit ? " Add one using the form." : ""}</p>
+            <p className="text-stone-400 italic text-sm">No items yet.{canManage ? " Add one using the form." : ""}</p>
           ) : (
             <ul className="space-y-3">
               {items.map((item) => (
@@ -292,10 +280,9 @@ export default function RegistryApp() {
                       )}
                     </div>
 
-                    {/* Edit/Delete only for admin & planner */}
-                    {canEdit && (
+                    {canManage && (
                       <div className="flex gap-2 ml-4 mt-0.5 flex-shrink-0">
-                        <button
+                        {canEdit && <button
                           onClick={() =>
                             editingId === item._id
                               ? (setEditingId(null), setEditForm({}))
@@ -311,7 +298,7 @@ export default function RegistryApp() {
                           className="px-3 py-1.5 text-xs font-sans text-stone-600 border border-stone-200 rounded-md hover:border-stone-400 hover:bg-stone-50 transition-colors cursor-pointer whitespace-nowrap"
                         >
                           {editingId === item._id ? "Cancel" : "Edit"}
-                        </button>
+                        </button>}
                         <button
                           onClick={() => handleDelete(item._id)}
                           className="px-3 py-1.5 text-xs font-sans text-red-500 border border-stone-200 rounded-md hover:border-red-300 hover:bg-red-50 transition-colors cursor-pointer whitespace-nowrap"
@@ -322,7 +309,6 @@ export default function RegistryApp() {
                     )}
                   </div>
 
-                  {/* Inline edit form (admin/planner only) */}
                   {canEdit && editingId === item._id && (
                     <div className="border-t border-stone-100 bg-stone-50 px-5 py-4">
                       <div className="flex flex-wrap gap-3 mb-3">
@@ -396,10 +382,9 @@ export default function RegistryApp() {
           )}
         </div>
 
-        {/* RIGHT: Add form (admin/planner) OR Wedding details (client/vendor) */}
         <div className="w-80 flex-shrink-0 overflow-y-auto px-8 py-6 bg-white">
 
-          {canEdit ? (
+          {canManage ? (
             <>
               <h2 className="text-lg font-bold text-stone-700 mb-5">Add New Item</h2>
 
@@ -487,7 +472,6 @@ export default function RegistryApp() {
               </form>
             </>
           ) : (
-            /* Client / vendor: wedding details panel */
             <>
               <h2 className="text-lg font-bold text-stone-700 mb-5">Wedding Details</h2>
               <div className="space-y-4">

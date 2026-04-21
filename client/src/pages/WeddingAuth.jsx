@@ -20,8 +20,7 @@ const WeddingAccess = () => {
       const res = await axios.post('/api/auth/guest-login', formData)
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('user', JSON.stringify(res.data.user))
-      const weddingRes = await axios.get(`/api/weddings/auth/${formData.authPassword}`)
-      navigate(`/wedding/details`, { state: weddingRes.data })
+      navigate(`/wedding/details`, { state: res.data.wedding })
     } catch (err) {
       setError(err.response?.data?.message || 'Access denied. Check your details and try again.')
     } finally {

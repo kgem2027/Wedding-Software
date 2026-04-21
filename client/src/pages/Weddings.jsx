@@ -22,6 +22,13 @@ const Weddings = () => {
   const [itemError, setItemError] = useState('')
   const [itemLoading, setItemLoading] = useState(false)
 
+  const [vendorModalOpen, setVendorModalOpen] = useState(false)
+  const [vendorWeddingId, setVendorWeddingId] = useState(null)
+  const [vendorSelected, setVendorSelected] = useState('')
+  const [vendorList, setVendorList] = useState([])
+  const [vendorError, setVendorError] = useState('')
+  const [vendorLoading, setVendorLoading] = useState(false)
+
   const token = localStorage.getItem('token')
   const user = (() => { try { return JSON.parse(localStorage.getItem('user')) } catch { return null } })()
   const authHeaders = { headers: { Authorization: `Bearer ${token}` } }
@@ -177,6 +184,47 @@ const Weddings = () => {
     }
   }
 
+  const openVendorModal = async (weddingId, e) => {
+    e.stopPropagation()
+    setVendorWeddingId(weddingId)
+    setVendorSelected('')
+    setVendorError('')
+    setVendorModalOpen(true)
+    try {
+      const res = await axios.get('/api/users/role/vendor', authHeaders)
+      const wedding = weddings.find(w => w._id === weddingId)
+      const alreadyAdded = new Set(wedding?.accessList?.map(a => a.userId?._id || a.userId) ?? [])
+      setVendorList(res.data.filter(v => !alreadyAdded.has(v._id)))
+    } catch {
+      setVendorError('Failed to load vendors.')
+    }
+  }
+
+  const handleAddVendor = async () => {
+    if (!vendorSelected) { setVendorError('Please select a vendor.'); return }
+    setVendorLoading(true)
+    setVendorError('')
+    try {
+      const res = await axios.post(`/api/weddings/${vendorWeddingId}/access`, { userId: vendorSelected }, authHeaders)
+      setWeddings(prev => prev.map(w => w._id === vendorWeddingId ? { ...w, accessList: res.data.accessList } : w))
+      setVendorModalOpen(false)
+    } catch (err) {
+      setVendorError(err.response?.data?.error || 'Failed to add vendor.')
+    } finally {
+      setVendorLoading(false)
+    }
+  }
+
+  const handleRemoveVendor = async (weddingId, userId, e) => {
+    e.stopPropagation()
+    try {
+      const res = await axios.delete(`/api/weddings/${weddingId}/access/${userId}`, authHeaders)
+      setWeddings(prev => prev.map(w => w._id === weddingId ? { ...w, accessList: res.data.accessList } : w))
+    } catch {
+      alert('Failed to remove vendor.')
+    }
+  }
+
   const filtered = weddings.filter(w =>
     w.weddingName?.toLowerCase().includes(search.toLowerCase()) ||
     w.plannerId?.name?.toLowerCase().includes(search.toLowerCase())
@@ -204,7 +252,7 @@ const Weddings = () => {
           <p className="text-sm text-indigo-400 mt-1">
             {user?.role === 'admin' ? 'All weddings in the system' :
              user?.role === 'planner' ? 'Weddings assigned to you' :
-             'Weddings you have access to'}
+             'Allowed Viewed Weddings'}
           </p>
         </div>
         {/* Search */}
@@ -381,20 +429,41 @@ const Weddings = () => {
                         ))
                       )}
 
-                      {/* Guest access summary (admin/planner only) */}
-                      {canEdit && wedding.accessList?.length > 0 && (
-                        <div className="px-4 py-2 bg-indigo-50/60 border-t border-indigo-100 flex gap-4">
-                          <p className="text-xs text-indigo-300 font-medium">Guests:</p>
-                          {wedding.accessList.filter(a => a.role === 'client').length > 0 && (
-                            <span className="text-xs text-indigo-400">
-                              {wedding.accessList.filter(a => a.role === 'client').length} clients
-                            </span>
-                          )}
-                          {wedding.accessList.filter(a => a.role === 'vendor').length > 0 && (
-                            <span className="text-xs text-indigo-400">
-                              {wedding.accessList.filter(a => a.role === 'vendor').length} vendors
-                            </span>
-                          )}
+                      {/* Vendor access panel */}
+                      {canEdit && (
+                        <div className="border-t border-indigo-100">
+                          <div className="px-4 py-2 bg-indigo-50/60 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-medium text-indigo-400">Vendors</p>
+                              <span className="text-xs bg-indigo-100 text-indigo-500 font-medium px-2 py-0.5 rounded-full">
+                                {wedding.accessList?.filter(a => a.role === 'vendor').length ?? 0}
+                              </span>
+                            </div>
+                            <button
+                              onClick={e => openVendorModal(wedding._id, e)}
+                              className="text-xs bg-pink-300/80 hover:bg-pink-400 text-white font-semibold px-2.5 py-1 rounded-lg transition-all"
+                            >
+                              + Add vendor
+                            </button>
+                          </div>
+                          {wedding.accessList?.filter(a => a.role === 'vendor').map(entry => (
+                            <div key={entry.userId} className="flex items-center justify-between px-4 py-2 border-b border-indigo-50 last:border-b-0 bg-white group/vendor">
+                              <div>
+                                <span className="text-xs font-medium text-gray-700">{entry.userId?.name || entry.userId}</span>
+                                {entry.userId?.service && (
+                                  <span className="ml-2 text-xs bg-indigo-100 text-indigo-500 px-2 py-0.5 rounded-full">{entry.userId.service}</span>
+                                )}
+                              </div>
+                              <button
+                                onClick={e => handleRemoveVendor(wedding._id, entry.userId?._id || entry.userId, e)}
+                                className="text-red-200 hover:text-red-400 transition-colors opacity-0 group-hover/vendor:opacity-100"
+                              >
+                                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -452,6 +521,40 @@ const Weddings = () => {
               </button>
               <button onClick={handleSave} disabled={modalLoading} className="px-4 py-2 text-sm bg-pink-300/80 hover:bg-pink-400 text-white font-semibold rounded-lg transition-all disabled:opacity-50">
                 {modalLoading ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Vendor Modal ── */}
+      {vendorModalOpen && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onClick={() => setVendorModalOpen(false)}>
+          <div className="bg-white rounded-2xl border border-indigo-100 shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-gray-800 mb-5">Add vendor</h2>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Vendor *</label>
+              <select
+                value={vendorSelected}
+                onChange={e => setVendorSelected(e.target.value)}
+                className="w-full px-3 py-2 border border-indigo-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#92a5e8] focus:border-transparent bg-white"
+              >
+                <option value="">Select a vendor…</option>
+                {vendorList.map(v => (
+                  <option key={v._id} value={v._id}>{v.name}{v.service ? ` — ${v.service}` : ''}</option>
+                ))}
+              </select>
+              {vendorList.length === 0 && !vendorError && (
+                <p className="text-xs text-gray-400 mt-1">No available vendors to add.</p>
+              )}
+            </div>
+            {vendorError && <p className="text-xs text-red-400 mt-3">{vendorError}</p>}
+            <div className="flex gap-2 justify-end mt-5">
+              <button onClick={() => setVendorModalOpen(false)} className="px-4 py-2 text-sm border border-indigo-200 rounded-lg text-gray-500 hover:bg-indigo-50 transition-all">
+                Cancel
+              </button>
+              <button onClick={handleAddVendor} disabled={vendorLoading} className="px-4 py-2 text-sm bg-pink-300/80 hover:bg-pink-400 text-white font-semibold rounded-lg transition-all disabled:opacity-50">
+                {vendorLoading ? 'Adding...' : 'Add vendor'}
               </button>
             </div>
           </div>

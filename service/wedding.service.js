@@ -11,13 +11,23 @@ const logger = pino({
 });
 async function getAllWeddings(userId, role) {
     logger.info('Listing all weddings from database');
+    const populate = { path: 'accessList.userId', select: 'name email role service' };
     if (role === 'admin') {
-        return await Weddings.find({});
+        return await Weddings.find({}).populate('plannerId', 'name').populate(populate);
     }
     if (role === 'planner') {
-        return await Weddings.find({ plannerId: userId });
+        return await Weddings.find({ plannerId: userId }).populate('plannerId', 'name').populate(populate);
     }
-    return await Weddings.find({ 'accessList.userId': userId });
+    if (role === 'vendor') {
+        return await Weddings.find({ 'accessList.userId': userId }).populate('plannerId', 'name').populate(populate);
+    }
+    // clients
+    return await Weddings.find({
+        $or: [
+            { 'accessList.userId': userId },
+            { privacy: 'public' }
+        ]
+    }).populate('plannerId', 'name').populate(populate);
 }
 async function createWedding(weddingName, weddingDate, plannerId, accessList, privacy) {
     const wedding = new Weddings({ weddingName, weddingDate, plannerId , accessList, privacy });
@@ -38,6 +48,20 @@ async function getWeddingsByUserId(userId) {
 async function getWeddingByAuthCode(authPassword) {
     return await Weddings.findOne({ authPassword });
 }
+async function addVendorToAccessList(weddingId, userId, grantedBy) {
+    return await Weddings.findByIdAndUpdate(
+        weddingId,
+        { $addToSet: { accessList: { userId, role: 'vendor', grantedBy } } },
+        { new: true }
+    ).populate({ path: 'accessList.userId', select: 'name email role service' });
+}
+async function removeFromAccessList(weddingId, userId) {
+    return await Weddings.findByIdAndUpdate(
+        weddingId,
+        { $pull: { accessList: { userId } } },
+        { new: true }
+    ).populate({ path: 'accessList.userId', select: 'name email role service' });
+}
 export default {
     createWedding,
     getWeddingById,
@@ -45,4 +69,7 @@ export default {
     deleteWedding,
     getWeddingsByUserId,
     getAllWeddings,
-    getWeddingByAuthCode};
+    getWeddingByAuthCode,
+    addVendorToAccessList,
+    removeFromAccessList
+};
