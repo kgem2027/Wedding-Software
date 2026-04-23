@@ -3,35 +3,31 @@ import GradientText from "../components/ui/gradient-text.jsx"
 import AuthenticationBackground from "./pageComponents/AuthenticationBackground.jsx"
 import { useState } from 'react'
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../components/authProvider.jsx'  
 
-const Register = ({ setUser }) => {
+const Register = () => {  
   const navigate = useNavigate()
+  const { login } = useAuth()  
 
   const [errors, setErrors] = useState('')
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-  })  
+    role: 'client',
+  })
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value
-    })
+    setFormData({ ...formData, [e.target.id]: e.target.value })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('/api/users/register', formData)
-      localStorage.setItem('token', res.data.token)
-      console.log(res.data)
-      setUser(res.data.user)
+      const res = await axios.post('/api/auth/register', formData) 
+      login(res.data.user, res.data.token) 
       navigate('/')
-      
     } catch (error) {
       setErrors(error.response?.data?.message || 'An error occurred during registration.')
     }
@@ -95,10 +91,46 @@ const Register = ({ setUser }) => {
           required  
         />
       </div>
+      <div className="mt-4">
+        <label className="block text-white text-sm font-medium mb-2" style={{ color: 'white' }}>
+          I am a:
+        </label>
+        <select
+          id="role"
+          value={formData.role}
+          onChange={handleChange}
+          className="w-full p-3 border border-gray-500 bg-gray-900 text-white rounded-md focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="client">Client</option>
+          <option value="vendor">Vendor</option>
+        </select>
+      </div>
       <button type="submit" className="mt-6 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
         Register
       </button>
     </form>
+     <div className="mt-6 text-center">
+              <p className="text-white text-sm">
+                Already a Client?{' '}
+                <Link
+                  to="/login"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  Login!
+                </Link>
+              </p>
+            </div>
+     <div className="mt-6 text-center">
+          <p className="text-white text-sm">
+            Have a wedding auth code?{' '}
+            <Link
+              to="/guest-login"
+              className="text-blue-400 hover:text-blue-300 underline"
+            >
+              Access a wedding
+            </Link>
+          </p>
+        </div>
     </AuthenticationBackground>
     </div>
   )
