@@ -13,13 +13,13 @@ async function getAllWeddings(userId, role) {
     logger.info('Listing all weddings from database');
     const populate = { path: 'accessList.userId', select: 'name email role service' };
     if (role === 'admin') {
-        return await Weddings.find({}).populate('plannerId', 'name').populate(populate);
+        return await Weddings.find({}).populate('plannerId', 'name email').populate(populate);
     }
     if (role === 'planner') {
-        return await Weddings.find({ plannerId: userId }).populate('plannerId', 'name').populate(populate);
+        return await Weddings.find({ plannerId: userId }).populate('plannerId', 'name email').populate(populate);
     }
     if (role === 'vendor') {
-        return await Weddings.find({ 'accessList.userId': userId }).populate('plannerId', 'name').populate(populate);
+        return await Weddings.find({ 'accessList.userId': userId }).populate('plannerId', 'name email').populate(populate);
     }
     // clients
     return await Weddings.find({

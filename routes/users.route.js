@@ -16,10 +16,12 @@ const logger = pino({
 // routes
 router.get('/', protect, requireRole('admin'), list);
 router.get('/role/vendor', protect, requireRole('admin', 'planner'), listVendors);
+router.get('/role/admin', protect, requireRole('admin', 'planner', 'client'), listAdmins);
+router.get('/role/planner', protect, requireRole('admin', 'planner', 'client'), listPlanners);
 router.get('/email/:email',protect, requireRole('admin', 'planner'), getByEmail);
 router.get('/:id', protect, requireRole('admin'), getById);
 router.post('/', protect, requireRole('admin'), add);
-router.put('/:id', protect, requireRole('admin'), update);
+router.put('/:id', protect, requireRole('admin', 'client', 'vendor', 'planner'), update);
 router.delete('/:id', protect, requireRole('admin', 'planner'), remove);
 
 function list(req, res) {
@@ -31,6 +33,16 @@ function listVendors(req, res) {
     usersService.getUsersByRole('vendor')
         .then(users => res.json(users))
         .catch(error => res.status(500).json({ error: 'Internal server error: ' + error }));
+}
+function listAdmins(req, res){
+    usersService.getUsersByRole('admin')
+        .then(users => res.json(users))
+        .catch(error => res.status(500).json({error: 'Internal server error: ' + error}));
+}
+function listPlanners(req, res) {
+    usersService.getUsersByRole('planner')
+        .then(users => res.json(users))
+        .catch(error => res.status(500).json({ error: 'Internal server error: ' + error }))
 }
 function getById(req, res) {
     const id = req.params.id;
@@ -56,15 +68,18 @@ function getByEmail(req, res) {
         .catch(error => res.status(500).json({ error: 'Internal server error: ' + error }));
 }
 function add(req, res) {
-    const { name, email, password, role } = req.body;
-    usersService.addUser(name, email, password, role)
+    const { name, email, password, role, bio, service } = req.body;
+    usersService.addUser(name, email, password, role, bio, service)
         .then(user => res.status(201).json(user))
         .catch(error => res.status(500).json({ error: 'Internal server error: ' + error}));
 }
 function update(req, res) {
     const id = req.params.id;
-    const { name, email, password, role, service } = req.body;
-    usersService.updateUser(id, name, email, password, role, service)
+    if (req.user.role !== 'admin' && req.user._id.toString() !== id) {
+        return res.status(403).json({ error: 'Forbidden' })
+    }
+    const { name, email, password, role, bio, service } = req.body;
+    usersService.updateUser(id, name, email, password, role, bio, service)
         .then(user => {
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });

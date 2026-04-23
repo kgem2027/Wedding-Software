@@ -9,6 +9,8 @@ import Weddings from "./pages/Weddings"
 import WeddingAccess from "./pages/WeddingAuth"
 import WeddingDetails from "./pages/WeddingDetails"
 import ProtectedRoute from "./components/ProtectedRoutes.jsx"
+import ContactUs from "./pages/ContactUs"
+import Profile from "./pages/Profile"
 import { AuthProvider, useAuth } from "./components/authProvider.jsx" 
 
 function AppContent() {
@@ -22,6 +24,8 @@ function AppContent() {
       {!hideNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<ProtectedRoute><Home user={user} /></ProtectedRoute>} />
+        <Route path = "/profile" element = {<ProtectedRoute><Profile/></ProtectedRoute>} />
+        <Route path = "/contact" element={<ContactUs />}/>
         <Route path="/guest-login" element={<WeddingAccess />} />
         <Route path="/wedding/details" element={<WeddingDetails />} />
         <Route path="/registry" element={<ProtectedRoute allowedRoles={['client']}><Registry /></ProtectedRoute>} />

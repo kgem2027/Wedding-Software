@@ -261,7 +261,20 @@ export default function RegistryApp() {
                   {/* Card top */}
                   <div className="flex justify-between items-start px-5 py-4">
                     <div className="flex flex-col gap-1">
-                      <span className="text-base font-semibold text-stone-900">{item.itemName}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-base font-semibold ${item.bought ? "line-through text-stone-400" : "text-stone-900"}`}>
+                          {item.itemName}
+                        </span>
+                        {item.bought ? (
+                          <span className="text-xs font-sans bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                            Bought by {item.boughtBy}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-sans bg-stone-100 text-stone-400 border border-stone-200 rounded-full px-2 py-0.5">
+                            Available
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-stone-400 font-sans">
                         Qty: {item.quantity}&nbsp;&nbsp;·&nbsp;&nbsp;Store: {item.store}
                       </span>

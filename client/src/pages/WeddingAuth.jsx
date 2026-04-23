@@ -107,6 +107,19 @@ const WeddingAccess = () => {
             </Link>
           </p>
         </div>
+                <div className="mt-6 text-center">
+          <p className="text-white text-sm">
+            New Client?{' '}
+            <Link
+              to="/register"
+              className="text-blue-400 hover:text-blue-300 underline"
+            >
+              Register
+            </Link>
+          </p>
+        </div>
+
+        
       </AuthenticationBackground>
     </div>
   )

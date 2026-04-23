@@ -402,6 +402,18 @@ const Weddings = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                              {item.bought ? (
+                                <span className="text-xs font-sans bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                                  Bought by {item.boughtBy}
+                                </span>
+                              ) : (
+                                <span className="text-xs font-sans bg-stone-100 text-stone-400 border border-stone-200 rounded-full px-2 py-0.5">
+                                  Available
+                                </span>
+                              )}
+                              </div>
+
                               <span className="text-xs bg-indigo-50 text-indigo-400 px-2 py-0.5 rounded-lg">x{item.quantity}</span>
                               {item.link && (
                                 <a

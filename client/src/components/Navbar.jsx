@@ -34,6 +34,21 @@ const Navbar = () => {
             Home
           </NavLink>
         </li>
+        <li>
+          <NavLink
+            to="/profile"
+            end
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                isActive
+                  ? 'bg-pink-400 text-white shadow-md'
+                  : 'bg-pink-300/80 text-white hover:bg-pink-400 hover:shadow-md'
+              }`
+            }
+          >
+            Profile
+          </NavLink>
+        </li>
         {user?.role === 'client' && (
         <li>
           <NavLink

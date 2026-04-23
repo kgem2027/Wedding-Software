@@ -16,7 +16,8 @@ const EditRoster = () => {
   const [modalLoading, setModalLoading] = useState(false)
 
   const [vendorModalOpen, setVendorModalOpen] = useState(false)
-  const [vendorModalData, setVendorModalData] = useState({ name: '', service: '', _id: '' })
+  const [vendorModalMode, setVendorModalMode] = useState('add')
+  const [vendorModalData, setVendorModalData] = useState({ name: '', email: '', password: '', service: '', _id: '' })
   const [vendorModalError, setVendorModalError] = useState('')
   const [vendorModalLoading, setVendorModalLoading] = useState(false)
 
@@ -27,13 +28,13 @@ const EditRoster = () => {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [usersRes, weddingsRes] = await Promise.all([
-        axios.get('/api/users'),
+      const [plannersRes, vendorsRes, weddingsRes] = await Promise.all([
+        axios.get('/api/users/role/planner'),
+        axios.get('/api/users/role/vendor'),
         axios.get('/api/weddings/')
       ])
-      const allUsers = usersRes.data
-      setPlanners(allUsers.filter(u => u.role === 'planner'))
-      setVendors(allUsers.filter(u => u.role === 'vendor'))
+      setPlanners(plannersRes.data)
+      setVendors(vendorsRes.data)
       setAllWeddings(weddingsRes.data)
     } catch (err) {
       setError('Failed to load roster data.')
@@ -72,7 +73,7 @@ const EditRoster = () => {
     setModalData({ ...modalData, [e.target.id]: e.target.value })
   }
 
-  const handleSave = async () => {
+  const handlePlannerSave = async () => {
     if (!modalData.name || !modalData.email) {
       setModalError('Name and email are required.')
       return
@@ -105,28 +106,73 @@ const EditRoster = () => {
       setModalLoading(false)
     }
   }
+  
+
+  const openAddVendorModal = () => {
+    setVendorModalMode('add')
+    setVendorModalData({ name: '', email: '', password: '', service: '', _id: '' })
+    setVendorModalError('')
+    setVendorModalOpen(true)
+  }
 
   const openVendorEditModal = (vendor, e) => {
     e.stopPropagation()
-    setVendorModalData({ name: vendor.name, service: vendor.service || '', _id: vendor._id })
+    setVendorModalMode('edit')
+    setVendorModalData({ name: vendor.name, email: vendor.email || '', password: '', service: vendor.service || '', _id: vendor._id })
     setVendorModalError('')
     setVendorModalOpen(true)
   }
 
   const handleVendorSave = async () => {
+    if (!vendorModalData.name || !vendorModalData.email) {
+      setVendorModalError('Name and email are required.')
+      return
+    }
+    if (vendorModalMode === 'add' && !vendorModalData.password) {
+      setVendorModalError('Password is required.')
+      return
+    }
     setVendorModalLoading(true)
     setVendorModalError('')
     try {
-      const res = await axios.put(`/api/users/${vendorModalData._id}`, {
-        name: vendorModalData.name,
-        service: vendorModalData.service
-      })
-      setVendors(prev => prev.map(v => v._id === vendorModalData._id ? { ...v, ...res.data } : v))
+      if (vendorModalMode === 'add') {
+        const res = await axios.post('/api/users', {
+          name: vendorModalData.name,
+          email: vendorModalData.email,
+          password: vendorModalData.password,
+          service: vendorModalData.service,
+          role: 'vendor'
+        })
+        setVendors(prev => [...prev, res.data.user ?? res.data])
+      } else {
+        const res = await axios.put(`/api/users/${vendorModalData._id}`, {
+          name: vendorModalData.name,
+          service: vendorModalData.service
+        })
+        setVendors(prev => prev.map(v => v._id === vendorModalData._id ? { ...v, ...res.data } : v))
+      }
       setVendorModalOpen(false)
     } catch (err) {
-      setVendorModalError(err.response?.data?.error || 'Something went wrong.')
+      setVendorModalError(err.response?.data?.message || err.response?.data?.error || 'Something went wrong.')
     } finally {
       setVendorModalLoading(false)
+    }
+  }
+  const handleDeleteVendor = async (id) => {
+    try {
+      await axios.delete(`/api/users/${id}`)
+      setVendors(prev => prev.filter(v => v._id !== id))
+    } catch (err) {
+      setVendorModalError(err.response?.data?.message || 'Something went wrong.')
+    }
+  }
+
+  const handleDeletePlanner = async (id) => {
+    try {
+      await axios.delete(`/api/users/${id}`)
+      setPlanners(prev => prev.filter(p => p._id !== id))
+    } catch (err) {
+      setError(err.response?.data?.message || 'Something went wrong.')
     }
   }
 
@@ -159,11 +205,19 @@ const EditRoster = () => {
 
         {/* ── Vendors Panel (left) ── */}
         <div className="bg-white rounded-2xl border border-indigo-100 overflow-hidden shadow-sm">
-          <div className="px-5 py-4 border-b border-indigo-100 flex items-center gap-2 bg-[#92a5e8]">
-            <span className="text-white font-medium text-sm">Vendors</span>
-            <span className="bg-white/30 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-              {vendors.length}
-            </span>
+          <div className="px-5 py-4 border-b border-indigo-100 flex items-center justify-between bg-[#92a5e8]">
+            <div className="flex items-center gap-2">
+              <span className="text-white font-medium text-sm">Vendors</span>
+              <span className="bg-white/30 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                {vendors.length}
+              </span>
+            </div>
+            <button
+              onClick={openAddVendorModal}
+              className="text-xs bg-pink-300/80 hover:bg-pink-400 text-white font-semibold px-3 py-1.5 rounded-lg transition-all duration-200"
+            >
+              + Add vendor
+            </button>
           </div>
 
           {/* Scrollable vendor list */}
@@ -192,6 +246,12 @@ const EditRoster = () => {
                     className="text-xs px-3 py-1 rounded-lg border border-indigo-200 text-indigo-400 hover:bg-indigo-100 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0"
                   >
                     Edit
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); handleDeleteVendor(vendor._id) }}
+                    className="text-xs px-3 py-1 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0"
+                  >
+                    Delete
                   </button>
                 </div>
               ))
@@ -250,6 +310,12 @@ const EditRoster = () => {
                         >
                           Edit
                         </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeletePlanner(planner._id) }}
+                          className="text-xs px-3 py-1 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          Delete
+                        </button>
                         <span className={`text-indigo-300 text-xs transition-transform duration-200 ${isSelected ? 'rotate-180' : ''}`}>
                           ▼
                         </span>
@@ -306,7 +372,9 @@ const EditRoster = () => {
       {vendorModalOpen && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onClick={() => setVendorModalOpen(false)}>
           <div className="bg-white rounded-2xl border border-indigo-100 shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
-            <h2 className="text-base font-semibold text-gray-800 mb-5">Edit vendor</h2>
+            <h2 className="text-base font-semibold text-gray-800 mb-5">
+              {vendorModalMode === 'add' ? 'Add vendor' : 'Edit vendor'}
+            </h2>
             <div className="flex flex-col gap-3">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Name</label>
@@ -317,6 +385,28 @@ const EditRoster = () => {
                   className="w-full px-3 py-2 border border-indigo-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#92a5e8] focus:border-transparent"
                 />
               </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Email</label>
+                <input
+                  type="email"
+                  placeholder="email@example.com"
+                  value={vendorModalData.email}
+                  onChange={e => setVendorModalData({ ...vendorModalData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-indigo-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#92a5e8] focus:border-transparent"
+                />
+              </div>
+              {vendorModalMode === 'add' && (
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Password</label>
+                  <input
+                    type="password"
+                    placeholder="Temporary password"
+                    value={vendorModalData.password}
+                    onChange={e => setVendorModalData({ ...vendorModalData, password: e.target.value })}
+                    className="w-full px-3 py-2 border border-indigo-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#92a5e8] focus:border-transparent"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Service Provided</label>
                 <input
@@ -405,7 +495,7 @@ const EditRoster = () => {
                 Cancel
               </button>
               <button
-                onClick={handleSave}
+                onClick={handlePlannerSave}
                 disabled={modalLoading}
                 className="px-4 py-2 text-sm bg-pink-300/80 hover:bg-pink-400 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50"
               >
