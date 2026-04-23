@@ -397,6 +397,21 @@ export default function RegistryApp() {
 
         <div className="w-80 flex-shrink-0 overflow-y-auto px-8 py-6 bg-white">
 
+          {(() => {
+            const isWeddingPlanner = (selectedWedding.plannerId?._id || selectedWedding.plannerId) === user?._id
+            const isWeddingClient = selectedWedding.accessList?.some(
+              a => (a.userId?._id || a.userId) === user?._id && a.role === 'client'
+            )
+            return (isWeddingPlanner || isWeddingClient) && selectedWedding.authPassword ? (
+              <div className="mb-5 px-3 py-2.5 bg-pink-50 border border-pink-100 rounded-lg flex items-center gap-2">
+                <span className="text-xs font-bold text-pink-400 uppercase tracking-wide font-sans">Auth Code</span>
+                <span className="text-xs font-mono text-pink-600 bg-pink-100 px-2 py-0.5 rounded select-all">
+                  {selectedWedding.authPassword}
+                </span>
+              </div>
+            ) : null
+          })()}
+
           {canManage ? (
             <>
               <h2 className="text-lg font-bold text-stone-700 mb-5">Add New Item</h2>

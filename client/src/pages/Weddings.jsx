@@ -302,6 +302,12 @@ const Weddings = () => {
               const clients = wedding.accessList?.filter(a => a.role === 'client').length ?? 0
               const vendors = wedding.accessList?.filter(a => a.role === 'vendor').length ?? 0
 
+              const isWeddingPlanner = (wedding.plannerId?._id || wedding.plannerId) === user?._id
+              const isWeddingClient = wedding.accessList?.some(
+                a => (a.userId?._id || a.userId) === user?._id && a.role === 'client'
+              )
+              const canSeeAuthPassword = isWeddingPlanner || isWeddingClient
+
               return (
                 <div key={wedding._id}>
                   {/* Wedding row */}
@@ -382,6 +388,16 @@ const Weddings = () => {
                           </button>
                         )}
                       </div>
+
+                      {/* Auth Password — planner or client only */}
+                      {canSeeAuthPassword && wedding.authPassword && (
+                        <div className="px-4 py-2 bg-pink-50 border-b border-pink-100 flex items-center gap-2">
+                          <span className="text-xs font-medium text-pink-400">Share this Auth Code with guests to invite them:</span>
+                          <span className="text-xs font-mono text-pink-600 bg-pink-100 px-2 py-0.5 rounded select-all">
+                            {wedding.authPassword}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Registry items */}
                       {loadingRegistry[wedding._id] ? (
